@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Smart Kids - Podcasts Educativos de Estudiantes</title>
+
+    <!-- SEO Básico -->
+    <meta name="description" content="Plataforma de podcasts educativos del proyecto Smart Kids. Escucha historias creadas por estudiantes de primaria de una escuela pública peruana. ¡Fomentando creatividad y aprendizaje!" />
+    <meta name="keywords" content="podcast, educativo, niños, escuela, perú, aprendizaje, creatividad, smart kids, podcasts para niños, proyectos escolares, educación primaria, tecnología educativa" />
+    <meta name="author" content="Inspyrio" />
+    <meta name="theme-color" content="#1AD96D">
+    <link rel="canonical" href="https://smartkids.example.com/" />
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Smart Kids - Podcasts Educativos por Niños" />
+    <meta property="og:description" content="Plataforma de podcasts del proyecto Smart Kids. Escucha historias creadas por estudiantes de primaria de una escuela pública peruana." />
+    <meta property="og:image" content="https://picsum.photos/seed/og-image/1200/630" />
+    <meta property="og:url" content="https://smartkids.example.com/" />
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:title" content="Smart Kids - Podcasts Educativos por Niños" />
+    <meta property="twitter:description" content="Plataforma de podcasts del proyecto Smart Kids. Escucha historias creadas por estudiantes de primaria de una escuela pública peruana." />
+    <meta property="twitter:image" content="https://picsum.photos/seed/og-image/1200/630" />
+
+    <!-- Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "Smart Kids",
+      "url": "https://smartkids.example.com/",
+      "description": "Plataforma de podcasts educativos del proyecto Smart Kids, donde estudiantes de primaria crean y comparten sus propias historias.",
+      "publisher": {
+        "@type": "EducationalOrganization",
+        "name": "Proyecto Educativo 'Smart Kids'",
+        "description": "Un proyecto de una escuela pública peruana para fomentar la creatividad y habilidades de comunicación en estudiantes de 4° a 6° grado a través del podcasting.",
+        "url": "https://smartkids.example.com/"
+      },
+      "inLanguage": "es-PE"
+    }
+    </script>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@600;700&display=swap" rel="stylesheet">
+    <style>
+      @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+      }
+      @keyframes scaleIn {
+        from { transform: scale(0.95); opacity: 0; }
+        to { transform: scale(1); opacity: 1; }
+      }
+      .scrollbar-hide::-webkit-scrollbar {
+        display: none;
+      }
+      .scrollbar-hide {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+      }
+    </style>
+    <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#1AD96D',
+            secondary: '#4F46E5',
+            accent: '#1AD96D',
+            dark: '#1E293B',
+            darker: '#0F172A',
+            light: '#F8FAFC',
+            'light-gray': '#F2F2F2',
+          },
+          fontFamily: {
+            heading: ['Poppins', 'sans-serif'],
+            body: ['Inter', 'sans-serif'],
+          },
+          borderRadius: {
+            'xl': '16px',
+            '2xl': '24px',
+          }
+        }
+      }
+    }
+    </script>
+<script type="importmap">
+{
+  "imports": {
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+    "lucide-react": "https://aistudiocdn.com/lucide-react@^0.545.0",
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
+    "react": "https://aistudiocdn.com/react@^19.2.0",
+    "react-router-dom": "https://aistudiocdn.com/react-router-dom@^7.9.4"
+  }
+}
+</script>
+<link rel="stylesheet" href="/index.css">
+</head>
+<body class="bg-darker font-body text-light">
+    <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
+</body>
+</html>
