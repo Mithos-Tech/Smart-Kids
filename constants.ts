@@ -143,7 +143,6 @@ export const PROFESSORS: Professor[] = [
     }
 ];
 
-
 export const TESTIMONIALS: Testimonial[] = [
   {
     quote: "Este proyecto ha sido increíble. Aprendí a hablar en público sin miedo y descubrí que mi voz es importante. ¡Ahora quiero ser periodista!",

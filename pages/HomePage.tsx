@@ -7,20 +7,48 @@ import { Episode, Testimonial } from '../types';
 import TrendingEpisodeModal from '../components/TrendingEpisodeModal';
 import { usePlayer } from '../context/PlayerContext';
 import { api } from '../src/services/api';
+import { getContentBySection, SiteContent } from '../src/firebase/content';
 
 const HeroSection: React.FC = () => {
+    const [heroContent, setHeroContent] = useState<SiteContent | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        const loadHeroContent = async () => {
+            try {
+                const content = await getContentBySection('hero');
+                if (content.length > 0) {
+                    setHeroContent(content[0]);
+                }
+            } catch (error) {
+                console.error('Error cargando imagen del hero:', error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        loadHeroContent();
+    }, []);
+
     return (
         <div className="relative bg-darker overflow-hidden min-h-screen">
             <div className="absolute inset-0 w-full h-full">
-                <div className="absolute inset-0 bg-gradient-to-t from-darker via-darker/80 to-transparent lg:bg-gradient-to-r lg:from-darker lg:via-darker/90 lg:to-transparent z-10"></div>
-                <img src="https://picsum.photos/seed/hero-bg/1920/1080" alt="Estudiante escuchando podcast" className="w-full h-full object-cover opacity-30" />
+                <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/30 to-transparent z-10"></div>
+                {isLoading ? (
+                    <div className="w-full h-full bg-dark/20 animate-pulse"></div>
+                ) : (
+                    <img 
+                        src={heroContent?.imageUrl || "https://picsum.photos/seed/hero-bg/1920/1080"} 
+                        alt={heroContent?.title || "Estudiante escuchando podcast"} 
+                        className="w-full h-full object-cover opacity-50" 
+                    />
+                )}
             </div>
-            
             <div className="container mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="relative flex items-center min-h-screen pt-20">
                     <div className="relative z-10 text-center lg:text-left py-16 lg:w-1/2">
                         <h1 className="font-heading text-4xl sm:text-6xl lg:text-7xl font-bold text-light leading-tight">
-                            Hablamos, <br /><span className="text-primary">Tú Escuchas</span>
+                            {heroContent?.title || 'Hablamos,'} <br />
+                            <span className="text-primary">{heroContent?.subtitle || 'Tú Escuchas'}</span>
                         </h1>
                         <p className="max-w-xl mx-auto lg:mx-0 mt-6 text-lg sm:text-xl text-light/70">
                             Descubre el talento y la creatividad de nuestros estudiantes a través de podcasts educativos hechos por y para niños.
@@ -34,6 +62,65 @@ const HeroSection: React.FC = () => {
                 </div>
             </div>
         </div>
+    );
+};
+
+const GallerySection: React.FC = () => {
+    const [galleryImages, setGalleryImages] = useState<SiteContent[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        const loadGalleryImages = async () => {
+            try {
+                const images = await getContentBySection('gallery');
+                setGalleryImages(images);
+            } catch (error) {
+                console.error('Error cargando galería:', error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        loadGalleryImages();
+    }, []);
+
+    return (
+        <section className="py-20 bg-darker">
+            <div className="container mx-auto px-4">
+                <SectionHeader 
+                    title="Galería del Proyecto"
+                    subtitle="Momentos capturados de nuestro viaje educativo"
+                />
+                
+                {isLoading ? (
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-12">
+                        {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => (
+                            <div key={n} className="aspect-[4/3] bg-dark/20 rounded-lg animate-pulse"></div>
+                        ))}
+                    </div>
+                ) : (
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-12">
+                        {galleryImages.length > 0 ? (
+                            galleryImages.map((image, index) => (
+                                <div 
+                                    key={image.id} 
+                                    className="aspect-[4/3] rounded-lg overflow-hidden group cursor-pointer hover:scale-105 transition-transform duration-300"
+                                >
+                                    <img 
+                                        src={image.imageUrl} 
+                                        alt={image.title || `Galería ${index + 1}`}
+                                        className="w-full h-full object-cover"
+                                    />
+                                </div>
+                            ))
+                        ) : (
+                            <div className="col-span-full text-center py-12 text-light/50">
+                                <p>No hay imágenes en la galería aún</p>
+                            </div>
+                        )}
+                    </div>
+                )}
+            </div>
+        </section>
     );
 };
 
@@ -119,7 +206,7 @@ const FeaturedEpisodesSection: React.FC = () => {
             try {
                 setIsLoading(true);
                 const data = await api.getEpisodes();
-                setEpisodes(data.slice(0, 6));
+                setEpisodes(data.slice(0, 3));
             } catch (error) {
                 console.error("Failed to fetch episodes:", error);
             } finally {
@@ -147,9 +234,9 @@ const FeaturedEpisodesSection: React.FC = () => {
         <div id="episodes" className="py-24 sm:py-32 bg-darker">
             <div className="container mx-auto px-4 sm:px-6 lg:px-8">
                 <SectionHeader title="Descubre Más Episodios" subtitle="Lo último de nuestros podcasters" />
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div className="max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
                     {isLoading ? (
-                        Array.from({ length: 6 }).map((_, i) => <EpisodeSkeleton key={i} />)
+                        Array.from({ length: 3 }).map((_, i) => <EpisodeSkeleton key={i} />)
                     ) : (
                         episodes.map(ep => <EpisodeCard key={ep.id} episode={ep} />)
                     )}
@@ -443,16 +530,18 @@ const SubscribeSection: React.FC = () => {
 
 
 const HomePage: React.FC = () => {
-    return (
-        <div className="bg-darker text-light">
-            <HeroSection />
-            <TrendingSection />
-            <FeaturedEpisodesSection />
-            <FeaturesCtaSection />
-            <TestimonialsSection />
-            <SubscribeSection />
-        </div>
-    );
+return (
+    <div className="min-h-screen bg-darker">
+        <HeroSection />
+        <TrendingSection />
+        
+        {/* Galería - NUEVA */}
+        <GallerySection />
+        
+        {/* Resto de secciones */}
+        ...
+    </div>
+);
 };
 
 export default HomePage;

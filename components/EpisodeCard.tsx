@@ -1,51 +1,68 @@
-
 import React from 'react';
 import { Episode } from '../types';
-import { usePlayer } from '../context/PlayerContext';
-import { Play, Headphones, Clock } from 'lucide-react';
+import { Sparkles, TrendingUp } from 'lucide-react';
 
 interface EpisodeCardProps {
     episode: Episode;
 }
 
 const EpisodeCard: React.FC<EpisodeCardProps> = ({ episode }) => {
-    const { playEpisode } = usePlayer();
-
-    const handlePlayClick = (e: React.MouseEvent) => {
-        e.stopPropagation();
-        e.preventDefault();
-        playEpisode(episode);
-    };
+    const isTrending = episode.plays > 1500;
 
     return (
-        <div className="bg-dark rounded-2xl overflow-hidden group transition-all duration-300 hover:shadow-2xl hover:shadow-primary/20 hover:-translate-y-2">
-            <div className="relative">
-                <img loading="lazy" src={episode.thumbnail} alt={episode.title} className="w-full h-48 object-cover" />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
-                <button 
-                    onClick={handlePlayClick}
-                    className="absolute bottom-4 right-4 bg-primary text-darker w-12 h-12 rounded-full flex items-center justify-center shadow-lg transform transition-all duration-300 ease-in-out scale-90 opacity-0 group-hover:scale-100 group-hover:opacity-100"
-                    aria-label="Reproducir episodio"
-                >
-                    <Play size={24} className="ml-1" />
-                </button>
-                <span 
-                    className="absolute top-4 left-4 text-light text-xs font-semibold px-3 py-1 rounded-full backdrop-blur-sm"
-                    style={{ backgroundColor: `${episode.color}99` }}
-                >
-                    {episode.category}
-                </span>
-            </div>
-            <div className="p-5">
-                <h3 className="font-heading text-lg font-bold text-light truncate mb-2 group-hover:text-primary transition-colors">{episode.title}</h3>
-                <p className="text-light/70 text-sm mb-4">
-                    por {episode.podcaster.name} ({episode.podcaster.grade})
-                </p>
-                <div className="flex justify-between items-center text-xs text-light/50 border-t border-darker pt-3 mt-3">
-                    <span className="flex items-center gap-1.5"><Clock size={14} /> {episode.duration} min</span>
-                    <span className="flex items-center gap-1.5"><Headphones size={14} /> {episode.plays.toLocaleString()}</span>
+        <div className="bg-dark rounded-2xl border border-light/10 overflow-hidden hover:border-light/20 transition-all duration-300 hover:shadow-xl hover:shadow-primary/10">
+            
+            {/* Header con padding */}
+            <div className="p-5 pb-4 h-28 flex flex-col justify-between">
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                        <Sparkles size={14} className="text-primary flex-shrink-0" />
+                        <span className="text-xs font-semibold text-light/50 uppercase tracking-wider">
+                            {episode.category}
+                        </span>
+                    </div>
+                    {isTrending && (
+                        <span className="text-xs text-red-400 font-semibold flex items-center gap-1 flex-shrink-0">
+                            <div className="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse" />
+                            Tendencia
+                        </span>
+                    )}
+                </div>
+                
+                {/* Título con altura fija (2 líneas máximo) */}
+                <h3 className="text-lg font-bold text-light leading-tight line-clamp-2">
+                    {episode.title}
+                </h3>
+                
+                {/* Autor en una línea */}
+                <div className="flex items-center gap-2 text-xs truncate">
+                    <span className="text-light/60">por</span>
+                    <span className="text-light font-medium truncate">{episode.podcaster.name}</span>
+                    <span className="text-light/30 flex-shrink-0">•</span>
+                    <span className="text-light/50 flex-shrink-0">{episode.podcaster.grade}</span>
                 </div>
             </div>
+
+            {/* Reproductor Spotify sin padding extra */}
+            <div className="px-5 pb-5">
+                {episode.embedUrl ? (
+                    <iframe
+                        style={{ borderRadius: '12px' }}
+                        src={episode.embedUrl}
+                        width="100%"
+                        height="352"
+                        frameBorder="0"
+                        allowFullScreen={true}
+                        allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+                        loading="lazy"
+                    />
+                ) : (
+                    <div className="bg-darker rounded-xl h-[352px] flex items-center justify-center text-light/50">
+                        No hay reproductor disponible
+                    </div>
+                )}
+            </div>
+
         </div>
     );
 };

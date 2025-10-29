@@ -6,39 +6,82 @@ import TeamPage from './pages/TeamPage';
 import TermsPage from './pages/TermsPage';
 import PrivacyPage from './pages/PrivacyPage';
 import LoginPage from './pages/LoginPage';
+import { TestUploadPage } from './pages/TestUploadPage';
+import AdminDashboard from './pages/admin/AdminDashboard';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import FloatingPlayer from './components/FloatingPlayer';
+import ProtectedRoute from './components/admin/ProtectedRoute';
 import { PlayerProvider, usePlayer } from './context/PlayerContext';
+import ContentEditor from './pages/admin/ContentEditor';
+import SiteContentEditor from './pages/admin/SiteContentEditor';
+import ContentManager from './pages/admin/ContentManager';
 
 const ScrollToTop = () => {
   const { pathname } = useLocation();
-
   React.useEffect(() => {
     window.scrollTo(0, 0);
   }, [pathname]);
-
   return null;
 };
 
 const AppContent: React.FC = () => {
     const { currentEpisode } = usePlayer();
-    
+    const location = useLocation();
+    const isAdminRoute = location.pathname.startsWith('/admin');
+
     return (
         <div className="flex flex-col min-h-screen">
-            <Header />
-            <main className="flex-grow pt-20"> 
+            {!isAdminRoute && <Header />}
+            <main className={!isAdminRoute ? "flex-grow pt-20" : "flex-grow"}>
                 <Routes>
+                    {/* Rutas públicas */}
                     <Route path="/" element={<HomePage />} />
                     <Route path="/episodes" element={<EpisodesPage />} />
                     <Route path="/team" element={<TeamPage />} />
                     <Route path="/terminos" element={<TermsPage />} />
                     <Route path="/privacidad" element={<PrivacyPage />} />
                     <Route path="/login" element={<LoginPage />} />
+                    <Route path="/test-upload" element={<TestUploadPage />} />
+                    
+                    {/* Rutas protegidas del admin */}
+                    <Route 
+                        path="/admin/dashboard" 
+                        element={
+                            <ProtectedRoute>
+                                <AdminDashboard />
+                            </ProtectedRoute>
+                        } 
+                    />
+                    <Route
+                       path="/admin/sitio"
+                       element={
+                            <ProtectedRoute>
+                               <SiteContentEditor />
+                           </ProtectedRoute>
+                        }
+                    /> 
+                    <Route
+                      path="/admin/imagenes"
+                      element={
+                           <ProtectedRoute>
+                              <ContentManager />
+                           </ProtectedRoute>
+                        }
+                    />
+                    <Route
+                      path="/admin/contenido"
+                      element={
+                           <ProtectedRoute>
+                             <SiteContentEditor />
+                           </ProtectedRoute>
+                        }
+                    />
+
                 </Routes>
             </main>
-            <Footer />
-            {currentEpisode && <FloatingPlayer />}
+            {!isAdminRoute && <Footer />}
+            {currentEpisode && !isAdminRoute && <FloatingPlayer />}
         </div>
     );
 };
