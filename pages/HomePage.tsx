@@ -36,10 +36,10 @@ const HeroSection: React.FC = () => {
                 {isLoading ? (
                     <div className="w-full h-full bg-dark/20 animate-pulse"></div>
                 ) : (
-                    <img 
-                        src={heroContent?.imageUrl || "https://picsum.photos/seed/hero-bg/1920/1080"} 
-                        alt={heroContent?.title || "Estudiante escuchando podcast"} 
-                        className="w-full h-full object-cover opacity-50" 
+                    <img
+                        src={heroContent?.imageUrl || "https://picsum.photos/seed/hero-bg/1920/1080"}
+                        alt={heroContent?.title || "Estudiante escuchando podcast"}
+                        className="w-full h-full object-cover opacity-50"
                     />
                 )}
             </div>
@@ -62,65 +62,6 @@ const HeroSection: React.FC = () => {
                 </div>
             </div>
         </div>
-    );
-};
-
-const GallerySection: React.FC = () => {
-    const [galleryImages, setGalleryImages] = useState<SiteContent[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
-
-    useEffect(() => {
-        const loadGalleryImages = async () => {
-            try {
-                const images = await getContentBySection('gallery');
-                setGalleryImages(images);
-            } catch (error) {
-                console.error('Error cargando galería:', error);
-            } finally {
-                setIsLoading(false);
-            }
-        };
-        loadGalleryImages();
-    }, []);
-
-    return (
-        <section className="py-20 bg-darker">
-            <div className="container mx-auto px-4">
-                <SectionHeader 
-                    title="Galería del Proyecto"
-                    subtitle="Momentos capturados de nuestro viaje educativo"
-                />
-                
-                {isLoading ? (
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-12">
-                        {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => (
-                            <div key={n} className="aspect-[4/3] bg-dark/20 rounded-lg animate-pulse"></div>
-                        ))}
-                    </div>
-                ) : (
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-12">
-                        {galleryImages.length > 0 ? (
-                            galleryImages.map((image, index) => (
-                                <div 
-                                    key={image.id} 
-                                    className="aspect-[4/3] rounded-lg overflow-hidden group cursor-pointer hover:scale-105 transition-transform duration-300"
-                                >
-                                    <img 
-                                        src={image.imageUrl} 
-                                        alt={image.title || `Galería ${index + 1}`}
-                                        className="w-full h-full object-cover"
-                                    />
-                                </div>
-                            ))
-                        ) : (
-                            <div className="col-span-full text-center py-12 text-light/50">
-                                <p>No hay imágenes en la galería aún</p>
-                            </div>
-                        )}
-                    </div>
-                )}
-            </div>
-        </section>
     );
 };
 
@@ -313,7 +254,7 @@ const TestimonialsSection: React.FC = () => {
     };
 
     const currentTestimonial = testimonials[currentIndex];
-    
+
     const animationStyle = `
         @keyframes contentFadeIn {
             from { opacity: 0; transform: translateY(10px); }
@@ -361,16 +302,16 @@ const TestimonialsSection: React.FC = () => {
                     )}
 
                     <div className="flex justify-center items-center gap-4 mt-8">
-                        <button 
-                            onClick={handlePrev} 
+                        <button
+                            onClick={handlePrev}
                             disabled={isLoading}
                             className="border-2 border-primary text-primary hover:bg-primary hover:text-darker rounded-full p-3 transition-colors duration-300 disabled:opacity-50"
                             aria-label="Testimonio anterior"
                         >
                             <ChevronLeft size={24} />
                         </button>
-                        <button 
-                            onClick={handleNext} 
+                        <button
+                            onClick={handleNext}
                             disabled={isLoading}
                             className="bg-primary text-darker hover:bg-primary/90 rounded-full p-3 transition-colors duration-300 disabled:opacity-50"
                             aria-label="Siguiente testimonio"
@@ -384,7 +325,6 @@ const TestimonialsSection: React.FC = () => {
     );
 };
 
-
 const SubscribeSection: React.FC = () => {
     const FORMSPARK_ACTION_URL = "https://submit-form.com/n7zm4n7k3";
     const [email, setEmail] = React.useState('');
@@ -393,9 +333,8 @@ const SubscribeSection: React.FC = () => {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        // Basic regex for email validation
         if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-            setStatus('error_server'); // Re-use this state for inline errors
+            setStatus('error_server');
             setMessage('Por favor, introduce una dirección de correo válida.');
             return;
         }
@@ -424,7 +363,7 @@ const SubscribeSection: React.FC = () => {
             setStatus('error_blocked');
         }
     };
-    
+
     const renderFormContent = () => {
         switch (status) {
             case 'success':
@@ -468,7 +407,7 @@ const SubscribeSection: React.FC = () => {
                         </form>
                     </div>
                 );
-            default: // idle, submitting, error_server
+            default:
                 return (
                     <>
                         <form
@@ -497,7 +436,6 @@ const SubscribeSection: React.FC = () => {
                         {status === 'error_server' && (
                             <p className="text-sm text-red-500 mt-4">{message}</p>
                         )}
-                        {/* FIX: The original condition was always true within this `default` switch case due to TypeScript's type narrowing, which caused an error. The privacy notice should be shown whenever the form is visible. */}
                         <p className="text-xs text-light/50 mt-4">
                             Respetamos tu privacidad. No spam.
                         </p>
@@ -514,9 +452,9 @@ const SubscribeSection: React.FC = () => {
                         {status === 'success' ? '¡Suscripción Exitosa!' : '¡No te pierdas ningún episodio!'}
                     </h2>
                     <p className="max-w-2xl mx-auto text-light/70 mb-8">
-                        {status === 'success' 
+                        {status === 'success'
                             ? message
-                            : status === 'error_blocked' 
+                            : status === 'error_blocked'
                             ? 'El último paso para mantenerte conectado con nuestras historias.'
                             : 'Suscríbete para recibir notificaciones de nuevos episodios y noticias del proyecto directamente en tu correo.'}
                     </p>
@@ -528,20 +466,17 @@ const SubscribeSection: React.FC = () => {
     );
 };
 
-
 const HomePage: React.FC = () => {
-return (
-    <div className="min-h-screen bg-darker">
-        <HeroSection />
-        <TrendingSection />
-        
-        {/* Galería - NUEVA */}
-        <GallerySection />
-        
-        {/* Resto de secciones */}
-        ...
-    </div>
-);
+    return (
+        <div className="min-h-screen bg-darker">
+            <HeroSection />
+            <TrendingSection />
+            <FeaturedEpisodesSection />
+            <FeaturesCtaSection />
+            <TestimonialsSection />
+            <SubscribeSection />
+        </div>
+    );
 };
 
 export default HomePage;

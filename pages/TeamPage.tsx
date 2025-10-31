@@ -3,6 +3,8 @@ import { Lightbulb, Trophy, Users, Globe, ArrowRight } from 'lucide-react';
 import { Professor } from '../types';
 import ParticipateModal from '../components/ParticipateModal';
 import { api } from '../src/services/api';
+import { getContentBySection, SiteContent } from '../src/firebase/content';
+import SectionHeader from '../components/SectionHeader';
 
 const HeroSection: React.FC = () => (
     <div className="bg-gradient-to-r from-secondary to-primary py-24 text-center">
@@ -84,21 +86,66 @@ const ProfessorsSection: React.FC = () => {
     );
 };
 
-const GallerySection: React.FC = () => (
-    <div className="py-24 bg-dark">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-            <h2 className="font-heading text-4xl font-bold text-center mb-12">Galería del Proyecto</h2>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {Array.from({ length: 8 }).map((_, i) => (
-                    <div key={i} className="group aspect-square rounded-2xl overflow-hidden relative">
-                        <img loading="lazy" src={`https://picsum.photos/seed/gallery${i + 1}/400/400`} alt={`Gallery image ${i+1}`} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300" />
-                        <div className="absolute inset-0 bg-darker/40 group-hover:bg-darker/20 transition-colors"></div>
+// GALERÍA DINÁMICA CON CLOUDINARY/FIREBASE
+const GallerySection: React.FC = () => {
+    const [galleryImages, setGalleryImages] = useState<SiteContent[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        const loadGalleryImages = async () => {
+            try {
+                const images = await getContentBySection('gallery');
+                setGalleryImages(images);
+            } catch (error) {
+                console.error('Error cargando galería:', error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        loadGalleryImages();
+    }, []);
+
+    return (
+        <section className="py-24 bg-dark">
+            <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+                <SectionHeader
+                    title="Galería del Proyecto"
+                    subtitle="Momentos capturados de nuestro viaje educativo"
+                />
+
+                {isLoading ? (
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-12">
+                        {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => (
+                            <div key={n} className="aspect-[4/3] bg-darker/50 rounded-lg animate-pulse"></div>
+                        ))}
                     </div>
-                ))}
+                ) : (
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-12">
+                        {galleryImages.length > 0 ? (
+                            galleryImages.map((image, index) => (
+                                <div
+                                    key={image.id}
+                                    className="aspect-[4/3] rounded-lg overflow-hidden group cursor-pointer hover:scale-105 transition-transform duration-300"
+                                >
+                                    <img
+                                        src={image.imageUrl}
+                                        alt={image.title || `Galería ${index + 1}`}
+                                        className="w-full h-full object-cover"
+                                        loading="lazy"
+                                    />
+                                </div>
+                            ))
+                        ) : (
+                            <div className="col-span-full text-center py-12 text-light/50">
+                                <p>No hay imágenes en la galería aún</p>
+                            </div>
+                        )}
+                    </div>
+                )}
             </div>
-        </div>
-    </div>
-);
+        </section>
+    );
+};
 
 const JourneySection: React.FC = () => {
     const timelineEvents = [
@@ -139,18 +186,15 @@ const JourneySection: React.FC = () => {
                     <h2 className="font-heading text-4xl font-bold">Nuestro Viaje: De una Idea a una Comunidad</h2>
                     <p className="text-light/70 mt-4 text-lg">Una cronología del esfuerzo y la pasión que dieron vida al proyecto "Cerebros Brillantes".</p>
                 </div>
-                
+
                 <div className="relative max-w-3xl mx-auto">
-                    {/* The vertical timeline bar */}
                     <div className="absolute left-4 top-2 h-full w-1 bg-dark rounded-full sm:left-1/2 sm:-translate-x-1/2"></div>
-                
+
                     <div className="space-y-16">
                         {timelineEvents.map((event, index) => (
                             <div key={index} className={`relative flex items-center ${
-                                // On desktop, odd items will have their content on the right (via flex-row-reverse)
                                 index % 2 !== 0 ? 'sm:flex-row-reverse' : ''
                             }`}>
-                                {/* Content card */}
                                 <div className={`w-full sm:w-[calc(50%-2.5rem)]`}>
                                     <div className="bg-dark p-6 rounded-2xl ml-10 sm:ml-0">
                                         <p className="text-sm font-semibold text-primary">{event.phase} - {event.year}</p>
@@ -158,11 +202,9 @@ const JourneySection: React.FC = () => {
                                         <p className="text-light/80">{event.description}</p>
                                     </div>
                                 </div>
-                
-                                {/* Spacer for desktop layout */}
+
                                 <div className="hidden sm:block sm:w-[calc(50%-2.5rem)]"></div>
 
-                                {/* Icon on the timeline */}
                                 <div className="absolute left-4 top-1/2 -translate-y-1/2 sm:left-1/2 sm:-translate-x-1/2 z-10">
                                     <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center ring-8 ring-darker">
                                         <event.icon className="w-5 h-5 text-darker" />
@@ -177,7 +219,6 @@ const JourneySection: React.FC = () => {
     );
 };
 
-
 const CtaSection: React.FC<{ onParticipateClick: () => void }> = ({ onParticipateClick }) => (
     <div className="py-24 bg-dark">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -186,7 +227,7 @@ const CtaSection: React.FC<{ onParticipateClick: () => void }> = ({ onParticipat
                     <h2 className="font-heading text-4xl font-bold text-darker">Únete a Nuestra Aventura Sonora</h2>
                     <p className="text-darker/80 mt-2 max-w-2xl mx-auto">¿Eres un docente, padre o alumno y quieres ser parte de algo increíble? ¡Nos encantaría saber de ti!</p>
                 </div>
-                <button 
+                <button
                     onClick={onParticipateClick}
                     className="bg-darker text-light font-bold py-4 px-8 rounded-2xl flex items-center gap-2 text-lg hover:bg-darker/90 transition-colors duration-300 transform hover:scale-105 shrink-0"
                 >
@@ -196,7 +237,6 @@ const CtaSection: React.FC<{ onParticipateClick: () => void }> = ({ onParticipat
         </div>
     </div>
 );
-
 
 const TeamPage: React.FC = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
