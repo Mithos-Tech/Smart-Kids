@@ -1,6 +1,6 @@
 import React from 'react';
 import { Episode } from '../types';
-import { Sparkles, TrendingUp } from 'lucide-react';
+import { Sparkles, TrendingUp, Play, Eye } from 'lucide-react';
 
 interface EpisodeCardProps {
     episode: Episode;
@@ -9,60 +9,82 @@ interface EpisodeCardProps {
 const EpisodeCard: React.FC<EpisodeCardProps> = ({ episode }) => {
     const isTrending = episode.plays > 1500;
 
+    // Función para formatear números
+    const formatPlays = (plays: number): string => {
+        if (plays >= 1000) {
+            return `${(plays / 1000).toFixed(1)}k`;
+        }
+        return plays.toString();
+    };
+
     return (
-        <div className="bg-dark rounded-2xl border border-light/10 overflow-hidden hover:border-light/20 transition-all duration-300 hover:shadow-xl hover:shadow-primary/10">
+        <div className="group bg-dark rounded-2xl border border-light/10 overflow-hidden hover:border-primary/30 transition-all duration-300 hover:shadow-xl hover:shadow-primary/10 hover:-translate-y-1">
             
-            {/* Header con padding */}
-            <div className="p-5 pb-4 h-28 flex flex-col justify-between">
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                        <Sparkles size={14} className="text-primary flex-shrink-0" />
-                        <span className="text-xs font-semibold text-light/50 uppercase tracking-wider">
-                            {episode.category}
-                        </span>
-                    </div>
-                    {isTrending && (
-                        <span className="text-xs text-red-400 font-semibold flex items-center gap-1 flex-shrink-0">
-                            <div className="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse" />
+            {/* HEADER: Badges y Metadata */}
+            <div className="p-4 pb-3 flex items-start justify-between">
+                {/* Badge de Categoría */}
+                <div className="flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 rounded-full border border-primary/20">
+                    <Sparkles size={12} className="text-primary flex-shrink-0" />
+                    <span className="text-xs font-bold text-primary uppercase tracking-wider">
+                        {episode.category}
+                    </span>
+                </div>
+
+                {/* Badge de Tendencia */}
+                {isTrending && (
+                    <div className="flex items-center gap-1.5 px-3 py-1.5 bg-red-500/10 rounded-full border border-red-500/20">
+                        <div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
+                        <span className="text-xs font-bold text-red-500 uppercase">
                             Tendencia
                         </span>
-                    )}
-                </div>
-                
-                {/* Título con altura fija (2 líneas máximo) */}
-                <h3 className="text-lg font-bold text-light leading-tight line-clamp-2">
-                    {episode.title}
-                </h3>
-                
-                {/* Autor en una línea */}
-                <div className="flex items-center gap-2 text-xs truncate">
-                    <span className="text-light/60">por</span>
-                    <span className="text-light font-medium truncate">{episode.podcaster.name}</span>
-                    <span className="text-light/30 flex-shrink-0">•</span>
-                    <span className="text-light/50 flex-shrink-0">{episode.podcaster.grade}</span>
-                </div>
-            </div>
-
-            {/* Reproductor Spotify sin padding extra */}
-            <div className="px-5 pb-5">
-                {episode.embedUrl ? (
-                    <iframe
-                        style={{ borderRadius: '12px' }}
-                        src={episode.embedUrl}
-                        width="100%"
-                        height="352"
-                        frameBorder="0"
-                        allowFullScreen={true}
-                        allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-                        loading="lazy"
-                    />
-                ) : (
-                    <div className="bg-darker rounded-xl h-[352px] flex items-center justify-center text-light/50">
-                        No hay reproductor disponible
                     </div>
                 )}
             </div>
 
+            {/* SPOTIFY EMBED: Protagonista del card */}
+            <div className="px-4">
+                {episode.embedUrl ? (
+                    <div className="relative overflow-hidden rounded-xl">
+                        <iframe
+                            style={{ borderRadius: '12px' }}
+                            src={episode.embedUrl}
+                            width="100%"
+                            height="352"
+                            frameBorder="0"
+                            allowFullScreen={true}
+                            allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+                            loading="lazy"
+                            title={`Episodio: ${episode.title}`}
+                        />
+                    </div>
+                ) : (
+                    <div className="bg-darker rounded-xl h-[352px] flex flex-col items-center justify-center text-light/50 border border-light/5">
+                        <Play size={48} className="mb-3 opacity-30" />
+                        <p className="text-sm">No hay reproductor disponible</p>
+                    </div>
+                )}
+            </div>
+
+            {/* FOOTER: Metadata Complementaria (NO redundante) */}
+            <div className="p-4 pt-3 flex items-center justify-between text-xs">
+                {/* Información Educativa */}
+                <div className="flex items-center gap-2">
+                    <span className="px-2 py-1 bg-darker rounded-md text-light/70 font-medium">
+                        {episode.podcaster.grade}
+                    </span>
+                    <span className="text-light/40">•</span>
+                    <span className="text-light/60">{episode.date}</span>
+                </div>
+
+                {/* Estadísticas de Engagement */}
+                <div className="flex items-center gap-1.5 text-light/50">
+                    <Eye size={14} />
+                    <span className="font-semibold">{formatPlays(episode.plays)}</span>
+                </div>
+            </div>
+
+            {/* Hover Effect: Borde animado */}
+            <div className="absolute inset-0 rounded-2xl border-2 border-primary/0 group-hover:border-primary/20 transition-all duration-300 pointer-events-none" />
         </div>
     );
 };
