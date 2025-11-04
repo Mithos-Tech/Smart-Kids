@@ -19,7 +19,7 @@ const AdminSidebar: React.FC = () => {
     },
     {
       name: 'Episodios',
-      path: '/admin/contenido',
+      path: '/admin/episodes', // ← CAMBIO: Nueva ruta
       icon: <Mic2 className="w-5 h-5" />
     },
     {
@@ -39,7 +39,11 @@ const AdminSidebar: React.FC = () => {
     }
   ];
 
-  const isActive = (path: string) => location.pathname === path;
+  const isActive = (path: string) => {
+    // Marcar como activo si la ruta actual empieza con el path del item
+    // Esto permite que /admin/episodes/new también marque "Episodios" como activo
+    return location.pathname === path || location.pathname.startsWith(path + '/');
+  };
 
   return (
     <aside className="w-64 bg-darker border-r border-light/10 flex flex-col h-screen fixed left-0 top-0">

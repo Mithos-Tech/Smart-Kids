@@ -8,6 +8,7 @@ import PrivacyPage from './pages/PrivacyPage';
 import LoginPage from './pages/LoginPage';
 import { TestUploadPage } from './pages/TestUploadPage';
 import AdminDashboard from './pages/admin/AdminDashboard';
+import EpisodesManager from './pages/admin/EpisodesManager';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import FloatingPlayer from './components/FloatingPlayer';
@@ -16,6 +17,7 @@ import { PlayerProvider, usePlayer } from './context/PlayerContext';
 import ContentEditor from './pages/admin/ContentEditor';
 import SiteContentEditor from './pages/admin/SiteContentEditor';
 import ContentManager from './pages/admin/ContentManager';
+import EpisodeForm from './pages/admin/EpisodeForm';
 
 const ScrollToTop = () => {
   const { pathname } = useLocation();
@@ -43,16 +45,44 @@ const AppContent: React.FC = () => {
                     <Route path="/privacidad" element={<PrivacyPage />} />
                     <Route path="/login" element={<LoginPage />} />
                     <Route path="/test-upload" element={<TestUploadPage />} />
-                    
+
                     {/* Rutas protegidas del admin */}
-                    <Route 
-                        path="/admin/dashboard" 
+                    <Route
+                        path="/admin/dashboard"
                         element={
                             <ProtectedRoute>
                                 <AdminDashboard />
                             </ProtectedRoute>
-                        } 
+                        }
                     />
+                    
+                    {/* NUEVAS RUTAS: Gestión de Episodios */}
+                    <Route
+                        path="/admin/episodes"
+                        element={
+                            <ProtectedRoute>
+                                <EpisodesManager />
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/admin/episodes/new"
+                        element={
+                            <ProtectedRoute>
+                                <EpisodeForm />  {/* ← Cambia esto */}
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/admin/episodes/edit/:id"
+                        element={
+                            <ProtectedRoute>
+                                <EpisodeForm />  {/* ← Cambia esto */}
+                            </ProtectedRoute>
+                        }
+                    />
+
+                    {/* Otras rutas admin */}
                     <Route
                        path="/admin/sitio"
                        element={
@@ -60,7 +90,7 @@ const AppContent: React.FC = () => {
                                <SiteContentEditor />
                            </ProtectedRoute>
                         }
-                    /> 
+                    />
                     <Route
                       path="/admin/imagenes"
                       element={

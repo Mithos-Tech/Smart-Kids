@@ -46,8 +46,8 @@ const AdminDashboard: React.FC = () => {
   };
 
   return (
-    <AdminLayout 
-      title="Dashboard" 
+    <AdminLayout
+      title="Dashboard"
       subtitle={`Bienvenido, ${userEmail}`}
     >
       {/* Estadísticas */}
@@ -99,7 +99,7 @@ const AdminDashboard: React.FC = () => {
         <h2 className="text-xl font-bold text-light mb-4">Acciones Rápidas</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <button
-            onClick={() => navigate('/admin/contenido')}
+            onClick={() => navigate('/admin/episodes/new')}
             className="p-4 bg-primary/10 border border-primary/20 rounded-lg text-left hover:bg-primary/20 transition-all group"
           >
             <div className="flex items-center gap-3">
@@ -107,8 +107,8 @@ const AdminDashboard: React.FC = () => {
                 <Mic className="w-5 h-5 text-darker" />
               </div>
               <div>
-                <h3 className="font-semibold text-light">Agregar Nuevo Episodio</h3>
-                <p className="text-sm text-light/60">Crear un nuevo podcast</p>
+                <h3 className="font-semibold text-light">Crear Nuevo Episodio</h3>
+                <p className="text-sm text-light/60">Agregar un nuevo podcast</p>
               </div>
             </div>
           </button>
