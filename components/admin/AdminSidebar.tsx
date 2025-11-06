@@ -29,7 +29,7 @@ const AdminSidebar: React.FC = () => {
     },
     {
       name: 'Equipo',
-      path: '/admin/equipo',
+      path: '/admin/profesores',
       icon: <Users className="w-5 h-5" />
     },
     {

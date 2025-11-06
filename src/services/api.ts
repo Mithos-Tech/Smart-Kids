@@ -1,14 +1,15 @@
 import { getEpisodes } from '../firebase/episodes';
+import { getProfessors as getProfessorsFromFirebase } from '../firebase/professors';
 import { PROFESSORS, TESTIMONIALS, CATEGORIES, GRADES } from '../../constants';
 import { Episode } from '../../types';
-import { 
-  collection, 
-  addDoc, 
-  updateDoc, 
-  deleteDoc, 
-  doc, 
+import {
+  collection,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  doc,
   getDoc,
-  serverTimestamp 
+  serverTimestamp
 } from 'firebase/firestore';
 import { db } from '../firebase/config';
 
@@ -33,10 +34,10 @@ export const api = {
   getEpisodes: async (): Promise<Episode[]> => {
     await delay(500);
     const firestoreEpisodes = await getEpisodes();
-    
+
     // Mapear TODOS los episodios al mismo formato normalizado
     return firestoreEpisodes.map((ep: any, index: number) => ({
-      id: ep.id || `ep-${index + 1}`, // Usar ID de Firestore o generar uno
+      id: ep.id || `ep-${index + 1}`,
       title: ep.title,
       description: ep.description,
       podcaster: {
@@ -46,7 +47,7 @@ export const api = {
       category: ep.category,
       duration: ep.duration,
       plays: ep.plays || 0,
-      date: ep.createdAt 
+      date: ep.createdAt
         ? (typeof ep.createdAt === 'object' && ep.createdAt.seconds
             ? new Date(ep.createdAt.seconds * 1000).toLocaleDateString('es-PE')
             : new Date().toLocaleDateString('es-PE'))
@@ -73,9 +74,24 @@ export const api = {
     return Promise.resolve(results);
   },
 
+  // Obtener profesores desde Firebase (con fallback a datos mock)
   getProfessors: async () => {
     await delay(500);
-    return Promise.resolve(PROFESSORS);
+    try {
+      const firebaseProfessors = await getProfessorsFromFirebase();
+      
+      // Si hay profesores en Firebase, usarlos
+      if (firebaseProfessors && firebaseProfessors.length > 0) {
+        return firebaseProfessors;
+      }
+      
+      // Fallback a datos mock si Firebase está vacío
+      console.log('Usando datos mock de profesores (Firebase vacío)');
+      return PROFESSORS;
+    } catch (error) {
+      console.error('Error obteniendo profesores de Firebase, usando datos mock:', error);
+      return PROFESSORS;
+    }
   },
 
   getTestimonials: async () => {
@@ -118,14 +134,14 @@ export const createEpisode = async (episodeData: {
   try {
     // Convertir URL de Spotify a formato embed automáticamente
     let embedUrl = episodeData.embedUrl.trim();
-    
+
     if (embedUrl.includes('open.spotify.com/episode/') && !embedUrl.includes('/embed/')) {
       const episodeId = embedUrl.split('/episode/')[1]?.split('?')[0];
       if (episodeId) {
         embedUrl = `https://open.spotify.com/embed/episode/${episodeId}?utm_source=generator`;
       }
     }
-    
+
     const episodesRef = collection(db, 'episodes');
     const docRef = await addDoc(episodesRef, {
       title: episodeData.title,
@@ -140,7 +156,7 @@ export const createEpisode = async (episodeData: {
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp()
     });
-    
+
     return { success: true, id: docRef.id };
   } catch (error) {
     console.error('Error al crear episodio:', error);
@@ -153,21 +169,21 @@ export const updateEpisode = async (id: string, episodeData: any) => {
   try {
     // Convertir URL de Spotify a formato embed automáticamente
     let embedUrl = episodeData.embedUrl?.trim();
-    
+
     if (embedUrl && embedUrl.includes('open.spotify.com/episode/') && !embedUrl.includes('/embed/')) {
       const episodeId = embedUrl.split('/episode/')[1]?.split('?')[0];
       if (episodeId) {
         embedUrl = `https://open.spotify.com/embed/episode/${episodeId}?utm_source=generator`;
       }
     }
-    
+
     const episodeRef = doc(db, 'episodes', id);
     await updateDoc(episodeRef, {
       ...episodeData,
       embedUrl: embedUrl || episodeData.embedUrl,
       updatedAt: serverTimestamp()
     });
-    
+
     return { success: true };
   } catch (error) {
     console.error('Error al actualizar episodio:', error);
@@ -180,7 +196,7 @@ export const deleteEpisode = async (id: string) => {
   try {
     const episodeRef = doc(db, 'episodes', id);
     await deleteDoc(episodeRef);
-    
+
     return { success: true };
   } catch (error) {
     console.error('Error al eliminar episodio:', error);
@@ -193,7 +209,7 @@ export const getEpisodeById = async (id: string) => {
   try {
     const episodeRef = doc(db, 'episodes', id);
     const episodeSnap = await getDoc(episodeRef);
-    
+
     if (episodeSnap.exists()) {
       return {
         success: true,

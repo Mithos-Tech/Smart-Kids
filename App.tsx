@@ -18,6 +18,7 @@ import ContentEditor from './pages/admin/ContentEditor';
 import SiteContentEditor from './pages/admin/SiteContentEditor';
 import ContentManager from './pages/admin/ContentManager';
 import EpisodeForm from './pages/admin/EpisodeForm';
+import ProfessorsManager from './pages/admin/ProfessorsManager';
 
 const ScrollToTop = () => {
   const { pathname } = useLocation();
@@ -57,6 +58,34 @@ const AppContent: React.FC = () => {
                     />
                     
                     {/* NUEVAS RUTAS: Gestión de Episodios */}
+                    <Route
+                        path="/admin/professors"
+                        element={
+                           <ProtectedRoute>
+                              <ProfessorsManager />
+                           </ProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/admin/professors/new"
+                        element={
+                           <ProtectedRoute>
+                              <div className="flex items-center justify-center min-h-screen bg-darker">
+                              <p className="text-light">Formulario Crear Profesor (próximamente)</p>
+                              </div>
+                           </ProtectedRoute>
+                        }
+                     />
+<Route
+    path="/admin/professors/edit/:id"
+    element={
+        <ProtectedRoute>
+            <div className="flex items-center justify-center min-h-screen bg-darker">
+                <p className="text-light">Formulario Editar Profesor (próximamente)</p>
+            </div>
+        </ProtectedRoute>
+    }
+/>
                     <Route
                         path="/admin/episodes"
                         element={
