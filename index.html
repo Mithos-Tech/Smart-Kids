@@ -66,6 +66,33 @@
         scrollbar-width: none;
       }
     </style>
+    <script src="https://cdn.tailwindcss.com"></script>  <-- CDN
+
+<script>
+tailwind.config = { // <-- REINSERTAR ESTE BLOQUE COMPLETO
+      theme: {
+        extend: {
+            colors: {
+                primary: '#1AD96D',
+                secondary: '#4F46E5',
+                accent: '#1AD96D',
+                dark: '#1E293B',
+                darker: '#0F172A',
+                light: '#F8FAFC',
+                'light-gray': '#F2F2F2',
+            },
+            fontFamily: {
+                heading: ['Poppins', 'sans-serif'],
+                body: ['Inter', 'sans-serif'],
+            },
+            borderRadius: {
+                'xl': '16px',
+                '2xl': '24px',
+            }
+        }
+    }
+}
+</script>
 <script type="importmap">
 {
   "imports": {
@@ -78,7 +105,6 @@
 }
 </script>
 <link rel="stylesheet" href="/index.css">
-<script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-darker font-body text-light">
     <div id="root"></div>
