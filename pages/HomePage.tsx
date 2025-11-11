@@ -7,6 +7,7 @@ import { Episode, Testimonial } from '../types';
 import TrendingEpisodeModal from '../components/TrendingEpisodeModal';
 import { usePlayer } from '../context/PlayerContext';
 import { api } from '../src/services/api';
+import { getFeaturedTestimonials } from '../src/firebase/testimonials';
 import { getContentBySection, SiteContent } from '../src/firebase/content';
 
 const HeroSection: React.FC = () => {
@@ -231,19 +232,21 @@ const TestimonialsSection: React.FC = () => {
     const [currentIndex, setCurrentIndex] = useState(0);
 
     useEffect(() => {
-        const fetchTestimonials = async () => {
-            try {
-                setIsLoading(true);
-                const data = await api.getTestimonials();
-                setTestimonials(data);
-            } catch (error) {
-                console.error("Failed to fetch testimonials:", error);
-            } finally {
-                setIsLoading(false);
-            }
-        };
-        fetchTestimonials();
-    }, []);
+    const fetchTestimonials = async () => {
+        try {
+            setIsLoading(true);
+            // Cargar testimonios destacados y activos de Firebase
+            const data = await getFeaturedTestimonials();
+            setTestimonials(data);
+        } catch (error) {
+            console.error("Failed to fetch testimonials:", error);
+            setTestimonials([]); // Mostrar array vacío si hay error
+        } finally {
+            setIsLoading(false);
+        }
+    };
+    fetchTestimonials();
+}, []);
 
     const handlePrev = () => {
         setCurrentIndex((prevIndex) => (prevIndex - 1 + testimonials.length) % testimonials.length);
@@ -292,14 +295,32 @@ const TestimonialsSection: React.FC = () => {
 
                 <div className="max-w-3xl mx-auto">
                     {isLoading ? <TestimonialSkeleton /> : currentTestimonial && (
-                        <div key={currentIndex} className="bg-dark p-8 sm:p-12 rounded-2xl shadow-lg flex flex-col text-center h-[320px] sm:h-[280px] justify-between animate-content-fade-in">
-                            <p className="text-light/80 italic text-xl sm:text-2xl">"{currentTestimonial.quote}"</p>
-                            <div className="mt-6 pt-6 border-t border-darker">
-                                <p className="font-bold text-light text-lg">{currentTestimonial.name}</p>
-                                <p className="text-primary text-base font-semibold">{currentTestimonial.role}</p>
-                            </div>
-                        </div>
-                    )}
+    <div key={currentIndex} className="bg-dark p-6 sm:p-10 rounded-2xl shadow-lg flex flex-col text-center min-h-[380px] animate-content-fade-in">
+        {/* Contenido del testimonio */}
+        <div className="flex-1 flex items-center justify-center py-4">
+            <p className="text-light/90 italic text-base sm:text-lg leading-relaxed max-w-2xl">
+                "{currentTestimonial.content}"
+            </p>
+        </div>
+        
+        {/* Rating (estrellas) */}
+        {currentTestimonial.rating && (
+            <div className="flex justify-center gap-1 my-4">
+                {[...Array(5)].map((_, i) => (
+                    <span key={i} className={`text-xl ${i < currentTestimonial.rating! ? 'text-yellow-500' : 'text-light/20'}`}>
+                        ★
+                    </span>
+                ))}
+            </div>
+        )}
+        
+        {/* Información del autor */}
+        <div className="pt-4 border-t border-light/10">
+            <p className="font-bold text-light text-lg">{currentTestimonial.name}</p>
+            <p className="text-primary text-sm font-semibold mt-1">{currentTestimonial.role}</p>
+        </div>
+    </div>
+)}
 
                     <div className="flex justify-center items-center gap-4 mt-8">
                         <button

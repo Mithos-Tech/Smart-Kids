@@ -1,0 +1,273 @@
+import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { onAuthStateChanged } from 'firebase/auth';
+import { auth } from '../../src/firebase/config';
+import { 
+  Mic, 
+  TrendingUp, 
+  Play, 
+  Users, 
+  MessageSquare,
+  Plus,
+  Edit,
+  BarChart3
+} from 'lucide-react';
+import { getEpisodes } from '../../src/firebase/episodes';
+import { getProfessors } from '../../src/firebase/professors';
+import AdminLayout from '../../components/admin/AdminLayout';
+
+const AdminDashboard: React.FC = () => {
+  const navigate = useNavigate();
+  const [userEmail, setUserEmail] = useState<string>('');
+  const [isLoading, setIsLoading] = useState(true);
+  const [stats, setStats] = useState({
+    totalEpisodes: 0,
+    publishedEpisodes: 0,
+    totalProfessors: 0,
+    activeProfessors: 0,
+    totalPlays: 0,
+    featuredEpisodes: 0
+  });
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        setUserEmail(user.email || '');
+      } else {
+        navigate('/login');
+      }
+    });
+
+    loadStats();
+
+    return () => unsubscribe();
+  }, [navigate]);
+
+  const loadStats = async () => {
+    try {
+      setIsLoading(true);
+
+      // Cargar episodios
+      const episodes = await getEpisodes();
+      const totalPlays = episodes.reduce((sum, ep) => sum + ep.plays, 0);
+      const publishedEpisodes = episodes.filter(ep => ep.status === 'published').length;
+      const featuredEpisodes = episodes.filter(ep => ep.featured === true).length;
+
+      // Cargar profesores
+      const professors = await getProfessors();
+      const activeProfessors = professors.filter(prof => prof.active !== false).length;
+
+      setStats({
+        totalEpisodes: episodes.length,
+        publishedEpisodes,
+        totalProfessors: professors.length,
+        activeProfessors,
+        totalPlays,
+        featuredEpisodes
+      });
+    } catch (error) {
+      console.error('Error loading stats:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const StatCard = ({ 
+    title, 
+    value, 
+    icon: Icon, 
+    color, 
+    subtitle 
+  }: { 
+    title: string; 
+    value: number | string; 
+    icon: any; 
+    color: string;
+    subtitle?: string;
+  }) => (
+    <div className="bg-darker rounded-xl p-6 border border-light/10 hover:border-light/20 transition-all">
+      <div className="flex items-start justify-between mb-3">
+        <div className="flex-1">
+          <p className="text-light/60 text-sm mb-1">{title}</p>
+          {isLoading ? (
+            <div className="h-10 w-20 bg-light/10 rounded animate-pulse"></div>
+          ) : (
+            <p className="text-4xl font-bold text-light">{value}</p>
+          )}
+          {subtitle && (
+            <p className="text-light/40 text-xs mt-1">{subtitle}</p>
+          )}
+        </div>
+        <div className={`w-12 h-12 ${color} rounded-lg flex items-center justify-center flex-shrink-0`}>
+          <Icon className="w-6 h-6" />
+        </div>
+      </div>
+    </div>
+  );
+
+  const QuickActionCard = ({ 
+    title, 
+    description, 
+    icon, 
+    color, 
+    onClick 
+  }: { 
+    title: string; 
+    description: string; 
+    icon: any; 
+    color: string;
+    onClick: () => void;
+  }) => (
+    <button
+      onClick={onClick}
+      className={`p-5 ${color} border rounded-xl text-left hover:scale-[1.02] transition-all group`}
+    >
+      <div className="flex items-start gap-4">
+        <div className={`w-12 h-12 ${color.replace('/10', '/20').replace('/20', '')} rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform flex-shrink-0`}>
+          {icon}
+        </div>
+        <div className="flex-1 min-w-0">
+          <h3 className="font-semibold text-light mb-1">{title}</h3>
+          <p className="text-sm text-light/60">{description}</p>
+        </div>
+        <Plus className="w-5 h-5 text-light/40 group-hover:text-light transition-colors flex-shrink-0" />
+      </div>
+    </button>
+  );
+
+  return (
+    <AdminLayout
+      title="Dashboard"
+      subtitle={`Bienvenido, ${userEmail}`}
+    >
+      {/* Estadísticas Principales */}
+      <div className="mb-8">
+        <h2 className="text-lg font-semibold text-light mb-4 flex items-center gap-2">
+          <BarChart3 className="w-5 h-5 text-primary" />
+          Estadísticas Generales
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <StatCard
+            title="Total Episodios"
+            value={stats.totalEpisodes}
+            icon={Mic}
+            color="bg-blue-600/20 text-blue-500"
+            subtitle={`${stats.publishedEpisodes} publicados`}
+          />
+
+          <StatCard
+            title="Reproducciones"
+            value={stats.totalPlays.toLocaleString()}
+            icon={Play}
+            color="bg-green-600/20 text-green-500"
+            subtitle="Total acumulado"
+          />
+
+          <StatCard
+            title="Equipo"
+            value={stats.totalProfessors}
+            icon={Users}
+            color="bg-purple-600/20 text-purple-500"
+            subtitle={`${stats.activeProfessors} activos`}
+          />
+
+          <StatCard
+            title="Destacados"
+            value={stats.featuredEpisodes}
+            icon={TrendingUp}
+            color="bg-yellow-600/20 text-yellow-500"
+            subtitle="En homepage"
+          />
+        </div>
+      </div>
+
+      {/* Acciones Rápidas */}
+      <div className="mb-8">
+        <h2 className="text-lg font-semibold text-light mb-4 flex items-center gap-2">
+          <Plus className="w-5 h-5 text-primary" />
+          Acciones Rápidas
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <QuickActionCard
+            title="Crear Nuevo Episodio"
+            description="Agregar un nuevo podcast al catálogo"
+            icon={<Mic className="w-6 h-6 text-blue-500" />}
+            color="bg-blue-600/10 border-blue-600/20"
+            onClick={() => navigate('/admin/episodes/new')}
+          />
+
+          <QuickActionCard
+            title="Agregar Profesor"
+            description="Añadir un nuevo miembro al equipo"
+            icon={<Users className="w-6 h-6 text-purple-500" />}
+            color="bg-purple-600/10 border-purple-600/20"
+            onClick={() => navigate('/admin/professors/new')}
+          />
+
+          <QuickActionCard
+            title="Editar Contenido del Sitio"
+            description="Modificar textos e imágenes de las páginas"
+            icon={<Edit className="w-6 h-6 text-green-500" />}
+            color="bg-green-600/10 border-green-600/20"
+            onClick={() => navigate('/admin/sitio')}
+          />
+
+          <QuickActionCard
+            title="Agregar Testimonio"
+            description="Registrar opiniones de padres y estudiantes"
+            icon={<MessageSquare className="w-6 h-6 text-yellow-500" />}
+            color="bg-yellow-600/10 border-yellow-600/20"
+            onClick={() => navigate('/admin/testimonials/new')}
+          />
+        </div>
+      </div>
+
+      {/* Sección de Gestión */}
+      <div>
+        <h2 className="text-lg font-semibold text-light mb-4 flex items-center gap-2">
+          <Edit className="w-5 h-5 text-primary" />
+          Gestión de Contenido
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <button
+            onClick={() => navigate('/admin/episodes')}
+            className="p-4 bg-darker border border-light/10 rounded-xl text-left hover:border-primary/30 transition-all group"
+          >
+            <div className="flex items-center justify-between mb-2">
+              <Mic className="w-5 h-5 text-blue-500" />
+              <span className="text-2xl font-bold text-light">{stats.totalEpisodes}</span>
+            </div>
+            <h3 className="font-semibold text-light mb-1">Episodios</h3>
+            <p className="text-sm text-light/60">Ver y gestionar todos los episodios</p>
+          </button>
+
+          <button
+            onClick={() => navigate('/admin/professors')}
+            className="p-4 bg-darker border border-light/10 rounded-xl text-left hover:border-primary/30 transition-all group"
+          >
+            <div className="flex items-center justify-between mb-2">
+              <Users className="w-5 h-5 text-purple-500" />
+              <span className="text-2xl font-bold text-light">{stats.totalProfessors}</span>
+            </div>
+            <h3 className="font-semibold text-light mb-1">Equipo</h3>
+            <p className="text-sm text-light/60">Gestionar profesores y coordinadores</p>
+          </button>
+
+          <button
+            onClick={() => navigate('/admin/testimonials')}
+            className="p-4 bg-darker border border-light/10 rounded-xl text-left hover:border-primary/30 transition-all group"
+          >
+            <div className="flex items-center justify-between mb-2">
+              <MessageSquare className="w-5 h-5 text-yellow-500" />
+              <span className="text-2xl font-bold text-light">0</span>
+            </div>
+            <h3 className="font-semibold text-light mb-1">Testimonios</h3>
+            <p className="text-sm text-light/60">Gestionar opiniones y reseñas</p>
+          </button>
+        </div>
+      </div>
+    </AdminLayout>
+  );
+};
+
+export default AdminDashboard;

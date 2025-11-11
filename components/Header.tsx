@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { NavLink, useLocation, useNavigate } from 'react-router-dom';
+import { NavLink, useLocation, useNavigate, Link } from 'react-router-dom';
 import { Mic, Menu, X, Search } from 'lucide-react';
 import SearchModal from './SearchModal';
 
@@ -73,10 +73,14 @@ const Header: React.FC = () => {
             <header className="bg-darker/80 backdrop-blur-lg fixed top-0 left-0 right-0 z-50 border-b border-dark">
                 <div className="container mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex items-center justify-between h-20">
-                        <NavLink to="/" className="flex items-center gap-2">
-                            <Mic className="w-8 h-8 text-primary" />
-                            <span className="font-heading text-2xl font-bold text-light">Smart Kids</span>
-                        </NavLink>
+                        <Link to="/" className="flex items-center gap-3 group">
+  <img 
+    src="https://res.cloudinary.com/dkoshgzxo/image/upload/v1762821044/Logo_Smart_iob3qz.png" 
+    alt="Smart Kids Logo" 
+    className="h-10 w-auto group-hover:scale-105 transition-transform duration-300"
+  />
+  <span className="font-heading text-xl font-bold text-light">Smart Kids</span>
+</Link>
 
                         <nav className="hidden md:flex items-center gap-8 font-medium">
                             <NavLinks />

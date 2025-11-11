@@ -25,7 +25,16 @@ export interface Professor {
 }
 
 export interface Testimonial {
-    quote: string;
+    id: string;
     name: string;
     role: string;
+    content: string;
+    quote?: string; // Mantener por compatibilidad
+    rating?: number;
+    photo?: string;
+    featured?: boolean;
+    active?: boolean;
+    order?: number;
+    createdAt?: any;
+    updatedAt?: any;
 }

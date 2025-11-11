@@ -25,10 +25,14 @@ const Footer: React.FC = () => {
                 <div className="grid grid-cols-1 md:grid-cols-12 gap-12">
                     {/* Column 1: Brand & Actions */}
                     <div className="flex flex-col gap-4 items-start md:col-span-6 lg:col-span-7">
-                         <Link to="/" className="flex items-center gap-2">
-                            <Mic className="w-8 h-8 text-primary" />
-                            <span className="font-heading text-2xl font-bold text-light">Smart Kids</span>
-                        </Link>
+<Link to="/" className="flex items-center gap-3">
+    <img
+        src="https://res.cloudinary.com/dkoshgzxo/image/upload/v1762821044/Logo_Smart_iob3qz.png"
+        alt="Smart Kids Logo"
+        className="h-8 w-auto" // h-8 es más pequeño que el h-10 del Header, ideal para el footer.
+    />
+    <span className="font-heading text-xl font-bold text-light">Smart Kids</span>
+</Link>
                         <p className="text-light/60 text-sm max-w-md">
                             El hogar digital del proyecto "Cerebros Brillantes", donde los estudiantes descubren su voz, cuentan sus historias y aprenden juntos.
                         </p>
@@ -67,11 +71,7 @@ const Footer: React.FC = () => {
             
             <div className="border-t border-dark py-6">
                 <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center text-sm text-light/40">
-                    <p>© 2025 Smart Kids. Todos los derechos reservados. Desarrollado por{' '}
-                        <a href="#" className="font-medium text-primary/80 hover:text-primary transition-colors duration-300">
-                            Inspyrio
-                        </a>
-                    </p>
+                    <p>© 2025 Smart Kids by <span className="font-medium text-primary/80">Inspyrio</span>. Todos los derechos reservados.</p>
                 </div>
             </div>
         </footer>
