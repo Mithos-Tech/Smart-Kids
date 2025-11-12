@@ -28,3 +28,6 @@ dist/
 dist/
 
 .vercel
+.env
+.env.local
+.env.production
