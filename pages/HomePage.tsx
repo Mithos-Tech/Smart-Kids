@@ -10,26 +10,42 @@ import { api } from '../src/services/api';
 import { getFeaturedTestimonials } from '../src/firebase/testimonials';
 import { getContentBySection, SiteContent } from '../src/firebase/content';
 
-// URL BASE FIJA - Usada como fallback para la precarga estática en index.html
+// URL BASE FIJA - Usada como fallback. DEBE INCLUIR LAS TRANSFORMACIONES
 const CLOUDINARY_IMAGE_FALLBACK_URL = 
-    "https://res.cloudinary.com/dkoshgzxo/image/upload/v1763335217/smart-kids/hero/kytzxyoxb659zf6pbjla.jpg"; //
+    "https://res.cloudinary.com/dkoshgzxo/image/upload/f_auto,q_auto:eco,w_1920,c_limit,fl_progressive:steep/v1763335217/smart-kids/hero/kytzxyoxb659zf6pbjla.jpg"; 
+    // ^^^ AÑADIDO: f_auto,q_auto:eco,w_1920,c_limit,fl_progressive:steep/
 
 // 🚀 HELPER: Optimizar URLs de Cloudinary
 const optimizeCloudinaryUrl = (url: string): string => {
     if (!url || !url.includes('cloudinary.com')) return url;
     
-    // Usamos las transformaciones que coinciden con el preload (asumiendo que ':steep' fue eliminado de index.html)
-    // NOTA: Si mantuviste ':steep' en index.html, cámbialo aquí también: 'f_auto,q_auto:eco,w_1920,c_limit,fl_progressive:steep'
+    // Usamos las transformaciones que coinciden con el preload
     const transformations = 'f_auto,q_auto:eco,w_1920,c_limit,fl_progressive:steep';
+    
+    // Si la URL YA tiene las transformaciones (como la que definimos en CLOUDINARY_IMAGE_FALLBACK_URL), la retorna.
+    if (url.includes(`/upload/${transformations}/`)) {
+        return url; 
+    }
+    
+    // Si la URL viene sin transformaciones (como la de Firebase), las inserta.
+    // Buscamos el timestamp (v1763335217/) y las insertamos antes de él.
+    // Esto es más seguro que solo buscar '/upload/'
+    
+    const versionMatch = url.match(/\/upload\/(v\d+)\//);
+
+    if (versionMatch) {
+        // Si tiene el timestamp (v...), insertamos las transformaciones ANTES
+        return url.replace(`/upload/${versionMatch[1]}/`, `/upload/${transformations}/${versionMatch[1]}/`);
+    }
+
+    // Fallback: si no tiene ni transformaciones ni versión, solo insertamos.
     return url.replace('/upload/', `/upload/${transformations}/`);
 };
 
 const HeroSection: React.FC = () => {
     const [heroContent, setHeroContent] = useState<SiteContent | null>(null);
-    // ✅ CAMBIO CLAVE: Se eliminó el estado 'isLoading' para evitar el bloqueo de opacidad
 
     useEffect(() => {
-        // Cargar contenido de Firebase (título/subtítulo)
         const loadHeroContent = async () => {
             try {
                 const content = await getContentBySection('hero');
@@ -37,17 +53,15 @@ const HeroSection: React.FC = () => {
                     setHeroContent(content[0]);
                 }
             } catch (error) {
-                console.error('Error cargando imagen del hero:', error);
+                console.error('Error cargando contenido del hero:', error);
             }
         };
         
         loadHeroContent();
-        
-        // Se eliminó el setTimeout y el return para evitar el bloqueo del render de la imagen.
     }, []);
 
     // 2. Usar la URL optimizada INMEDIATAMENTE.
-    // Si heroContent es nulo (no ha cargado Firebase), usa la URL BASE fija.
+    // Usamos el fallback optimizado (que ya incluye el timestamp)
     const imageUrlToOptimize = heroContent?.imageUrl || CLOUDINARY_IMAGE_FALLBACK_URL;
     const optimizedImageUrl = optimizeCloudinaryUrl(imageUrlToOptimize);
 
@@ -57,14 +71,11 @@ const HeroSection: React.FC = () => {
             <div className="absolute inset-0 w-full h-full">
                 <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/30 to-transparent z-10"></div>
                 
-                {/* ❌ Se eliminó el Skeleton de fondo */}
-                
-                {/* ✅ IMAGEN: Opacidad Fija e Instantánea */}
+                {/* La imagen usa la URL que debe coincidir con la precarga */}
                 <img
                     src={optimizedImageUrl}
                     alt={heroContent?.title || "Estudiante escuchando podcast"}
                     className="absolute inset-0 w-full h-full object-cover"
-                    // **CAMBIO CLAVE**: Opacidad Fija en 0.5 (visible inmediatamente)
                     style={{ opacity: 0.5 }} 
                     loading="eager"
                     fetchPriority="high"
