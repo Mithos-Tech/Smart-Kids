@@ -10,76 +10,40 @@ import { api } from '../src/services/api';
 import { getFeaturedTestimonials } from '../src/firebase/testimonials';
 import { getContentBySection, SiteContent } from '../src/firebase/content';
 
-// 🚀 HELPER: Optimizar URLs de Cloudinary
-const optimizeCloudinaryUrl = (url: string): string => {
-    if (!url || !url.includes('cloudinary.com')) return url;
-    
-    // Insertar transformaciones después de /upload/
-    // AÑADIDO: ':steep' para que coincida con el <link rel="preload"> en index.html
-    const transformations = 'f_auto,q_auto:eco,w_1920,c_limit,fl_progressive:steep';
-    return url.replace('/upload/', `/upload/${transformations}/`);
-};
-
 const HeroSection: React.FC = () => {
     const [heroContent, setHeroContent] = useState<SiteContent | null>(null);
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-    // Cargar contenido sin bloquear el render
-    const loadHeroContent = async () => {
-        try {
-            const content = await getContentBySection('hero');
-            if (content.length > 0) {
-                setHeroContent(content[0]);
+        const loadHeroContent = async () => {
+            try {
+                const content = await getContentBySection('hero');
+                if (content.length > 0) {
+                    setHeroContent(content[0]);
+                }
+            } catch (error) {
+                console.error('Error cargando imagen del hero:', error);
+            } finally {
+                setIsLoading(false);
             }
-        } catch (error) {
-            console.error('Error cargando imagen del hero:', error);
-        } finally {
-            setIsLoading(false);
-        }
-    };
-    
-    loadHeroContent();
-    
-    // ✅ CLAVE: Desbloquear render después de 100ms aunque Firebase no responda
-    const timeout = setTimeout(() => {
-        if (isLoading) {
-            setIsLoading(false);
-        }
-    }, 100);
-    
-    return () => clearTimeout(timeout);
-}, []);
-
-    // Optimizar la URL de la imagen (con fallback a la URL del preload)
-const optimizedImageUrl = heroContent?.imageUrl
-    ? optimizeCloudinaryUrl(heroContent.imageUrl)
-    : "https://res.cloudinary.com/dkoshgzxo/image/upload/f_auto,q_auto:eco,w_1920,c_limit,fl_progressive:steep/v1763335217/smart-kids/hero/kytzxyoxb659zf6pbjla.jpg";
+        };
+        loadHeroContent();
+    }, []);
 
     return (
         <div className="relative bg-darker overflow-hidden min-h-screen">
-            {/* Imagen de fondo - siempre renderizada */}
             <div className="absolute inset-0 w-full h-full">
                 <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/30 to-transparent z-10"></div>
-                
-                {/* ✅ Skeleton de fondo mientras carga */}
-                {isLoading && (
-                    <div className="absolute inset-0 w-full h-full bg-dark/20 animate-pulse"></div>
+                {isLoading ? (
+                    <div className="w-full h-full bg-dark/20 animate-pulse"></div>
+                ) : (
+                    <img
+                        src={heroContent?.imageUrl || "https://picsum.photos/seed/hero-bg/1920/1080"}
+                        alt={heroContent?.title || "Estudiante escuchando podcast"}
+                        className="w-full h-full object-cover opacity-50"
+                    />
                 )}
-                
-                {/* ✅ Imagen siempre presente (aunque esté loading) */}
-                <img
-                    src={optimizedImageUrl}
-                    alt={heroContent?.title || "Estudiante escuchando podcast"}
-                    className="absolute inset-0 w-full h-full object-cover"
-                    style={{ opacity: isLoading ? 0 : 0.5 }}
-                    loading="eager"
-                    fetchPriority="high"
-                    decoding="async"
-                />
             </div>
-            
-            {/* Contenido del hero */}
             <div className="container mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="relative flex items-center min-h-screen pt-20">
                     <div className="relative z-10 text-center lg:text-left py-16 lg:w-1/2">
@@ -101,8 +65,6 @@ const optimizedImageUrl = heroContent?.imageUrl
         </div>
     );
 };
-
-// ... (El resto del código como TrendingSection, FeaturedEpisodesSection, etc. es el mismo)
 
 const TrendingSection: React.FC = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -273,11 +235,12 @@ const TestimonialsSection: React.FC = () => {
     const fetchTestimonials = async () => {
         try {
             setIsLoading(true);
+            // Cargar testimonios destacados y activos de Firebase
             const data = await getFeaturedTestimonials();
             setTestimonials(data);
         } catch (error) {
             console.error("Failed to fetch testimonials:", error);
-            setTestimonials([]);
+            setTestimonials([]); // Mostrar array vacío si hay error
         } finally {
             setIsLoading(false);
         }
@@ -333,12 +296,14 @@ const TestimonialsSection: React.FC = () => {
                 <div className="max-w-3xl mx-auto">
                     {isLoading ? <TestimonialSkeleton /> : currentTestimonial && (
     <div key={currentIndex} className="bg-dark p-6 sm:p-10 rounded-2xl shadow-lg flex flex-col text-center min-h-[380px] animate-content-fade-in">
+        {/* Contenido del testimonio */}
         <div className="flex-1 flex items-center justify-center py-4">
             <p className="text-light/90 italic text-base sm:text-lg leading-relaxed max-w-2xl">
                 "{currentTestimonial.content}"
             </p>
         </div>
-
+        
+        {/* Rating (estrellas) */}
         {currentTestimonial.rating && (
             <div className="flex justify-center gap-1 my-4">
                 {[...Array(5)].map((_, i) => (
@@ -348,7 +313,8 @@ const TestimonialsSection: React.FC = () => {
                 ))}
             </div>
         )}
-
+        
+        {/* Información del autor */}
         <div className="pt-4 border-t border-light/10">
             <p className="font-bold text-light text-lg">{currentTestimonial.name}</p>
             <p className="text-primary text-sm font-semibold mt-1">{currentTestimonial.role}</p>
@@ -438,8 +404,8 @@ const SubscribeSection: React.FC = () => {
                         </div>
                         <h3 className="text-xl font-bold text-light mb-3">Conexión Bloqueada</h3>
                         <p className="text-light/80 mb-6 max-w-md mx-auto">
-                            Parece que un bloqueador de anuncios o tu red impidió el envío.
-                            Completa la suscripción en una nueva pestaña para asegurar que llegue.
+                           Parece que un bloqueador de anuncios o tu red impidió el envío.
+                           Completa la suscripción en una nueva pestaña para asegurar que llegue.
                         </p>
                         <form
                             action={FORMSPARK_ACTION_URL}

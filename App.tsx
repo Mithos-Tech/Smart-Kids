@@ -279,6 +279,14 @@ const AppContent: React.FC = () => {
 };
 
 function App() {
+  // Remover header inicial cuando React monta
+  React.useEffect(() => {
+    const initialHeader = document.getElementById('initial-header');
+    if (initialHeader) {
+      initialHeader.style.display = 'none';
+    }
+  }, []);
+
   return (
     <HashRouter>
       <ScrollToTop />

@@ -54,7 +54,7 @@ const HeroEditor: React.FC = () => {
     loadHeroContent();
   }, []);
 
-  // Subir imagen a Cloudinary (permite duplicados para que funcione)
+  // Subir imagen a Cloudinary
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -77,32 +77,27 @@ const HeroEditor: React.FC = () => {
 
       const formData = new FormData();
       formData.append('file', file);
-      formData.append('upload_preset', CLOUDINARY_CONFIG.uploadPreset);
-      formData.append('folder', 'smart-kids/hero'); // Carpeta específica para hero
-      // No usamos public_id fijo para que Cloudinary genere uno automático
+      formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+      formData.append('folder', 'smart-kids/hero'); // Organizar en carpeta
+      formData.append('public_id', 'hero-main'); // Nombre fijo para sobrescribir
+      formData.append('overwrite', 'true'); // IMPORTANTE: Sobrescribir en vez de duplicar
 
-      const response = await fetch(
-        `https://api.cloudinary.com/v1_1/${CLOUDINARY_CONFIG.cloudName}/image/upload`,
-        {
-          method: 'POST',
-          body: formData,
-        }
-      );
+      const response = await fetch(CLOUDINARY_UPLOAD_URL, {
+        method: 'POST',
+        body: formData,
+      });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        console.error('Error de Cloudinary:', errorData);
-        throw new Error(errorData.error?.message || 'Error al subir imagen');
+        throw new Error('Error al subir imagen');
       }
 
       const data = await response.json();
-      console.log('Imagen subida exitosamente:', data.secure_url);
       setImageUrl(data.secure_url);
       setImagePreview(data.secure_url);
       
-    } catch (err: any) {
+    } catch (err) {
       console.error('Error subiendo imagen:', err);
-      setError(err.message || 'Error al subir la imagen a Cloudinary');
+      setError('Error al subir la imagen a Cloudinary');
     } finally {
       setUploading(false);
     }

@@ -8,6 +8,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Smart Kids - Podcasts Educativos de Estudiantes</title>
 
+    <!-- 🚀 PRECARGA CRÍTICA DE IMAGEN HERO -->
+    <link
+       rel="preload"
+       as="image"
+       href="https://res.cloudinary.com/dkoshgzxo/image/upload/f_auto,q_auto:eco,w_1920,c_limit,fl_progressive:steep/v1763335217/smart-kids/hero/kytzxyoxb659zf6pbjla.jpg"
+       fetchpriority="high"
+    />
+
     <!-- SEO Básico -->
     <meta name="description" content="Plataforma de podcasts educativos del proyecto Smart Kids. Escucha historias creadas por estudiantes de primaria de una escuela pública peruana. ¡Fomentando creatividad y aprendizaje!" />
     <meta name="keywords" content="podcast, educativo, niños, escuela, perú, aprendizaje, creatividad, smart kids, podcasts para niños, proyectos escolares, educación primaria, tecnología educativa" />
@@ -108,7 +116,53 @@
     <!-- CSS se importa automáticamente por Vite, NO necesitas esta línea -->
 </head>
 <body class="bg-darker font-body text-light">
-    <div id="root"></div>
+    <!-- Header inicial mientras React carga -->
+<div id="initial-header" class="fixed top-0 left-0 right-0 z-50 bg-darker border-b border-dark">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex items-center justify-between h-20">
+            <div class="flex items-center gap-2">
+                <img src="https://res.cloudinary.com/dkoshgzxo/image/upload/v1762821044/Logo_Smart_iob3qz.png" alt="Smart Kids" class="h-12 w-12" />
+                <span class="text-2xl font-bold text-light">Smart Kids</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+    <div id="root">
+    <!-- Hero inicial - idéntico al de React -->
+    <div class="relative bg-darker overflow-hidden min-h-screen">
+        <div class="absolute inset-0 w-full h-full">
+            <div class="absolute inset-0 bg-gradient-to-r from-black/70 via-black/30 to-transparent z-10"></div>
+            <img 
+                src="https://res.cloudinary.com/dkoshgzxo/image/upload/f_auto,q_auto:eco,w_1920,c_limit,fl_progressive:steep/v1763335217/smart-kids/hero/kytzxyoxb659zf6pbjla.jpg"
+                alt="Smart Kids Hero"
+                class="absolute inset-0 w-full h-full object-cover"
+                style="opacity: 0.5;"
+                loading="eager"
+                fetchpriority="high"
+            />
+        </div>
+        
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="relative flex items-center min-h-screen pt-20">
+                <div class="relative z-10 text-center lg:text-left py-16 lg:w-1/2">
+                    <h1 class="font-heading text-4xl sm:text-6xl lg:text-7xl font-bold text-light leading-tight">
+                        Hablamos, <br />
+                        <span class="text-primary">Tú Escuchas</span>
+                    </h1>
+                    <p class="max-w-xl mx-auto lg:mx-0 mt-6 text-lg sm:text-xl text-light/70">
+                        Descubre el talento y la creatividad de nuestros estudiantes a través de podcasts educativos hechos por y para niños.
+                    </p>
+                    <div class="mt-10 flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4">
+                        <a href="#episodes" class="w-full sm:w-auto bg-primary text-darker font-bold py-4 px-8 rounded-xl flex items-center justify-center gap-2 text-lg hover:bg-primary/90 transition-all duration-300 transform hover:scale-105">
+                            Descubre ahora
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
     <script type="module" src="/index.tsx"></script>
 </body>
 </html>
