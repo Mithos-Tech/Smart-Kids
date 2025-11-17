@@ -10,51 +10,46 @@ import { api } from '../src/services/api';
 import { getFeaturedTestimonials } from '../src/firebase/testimonials';
 import { getContentBySection, SiteContent } from '../src/firebase/content';
 
+// URL BASE FIJA - Usada como fallback para la precarga estática en index.html
+const CLOUDINARY_IMAGE_FALLBACK_URL = 
+    "https://res.cloudinary.com/dkoshgzxo/image/upload/v1763335217/smart-kids/hero/kytzxyoxb659zf6pbjla.jpg"; //
+
 // 🚀 HELPER: Optimizar URLs de Cloudinary
 const optimizeCloudinaryUrl = (url: string): string => {
     if (!url || !url.includes('cloudinary.com')) return url;
     
-    // Insertar transformaciones después de /upload/
-    // AÑADIDO: ':steep' para que coincida con el <link rel="preload"> en index.html
+    // Usamos las transformaciones que coinciden con el preload (asumiendo que ':steep' fue eliminado de index.html)
+    // NOTA: Si mantuviste ':steep' en index.html, cámbialo aquí también: 'f_auto,q_auto:eco,w_1920,c_limit,fl_progressive:steep'
     const transformations = 'f_auto,q_auto:eco,w_1920,c_limit,fl_progressive:steep';
     return url.replace('/upload/', `/upload/${transformations}/`);
 };
 
 const HeroSection: React.FC = () => {
     const [heroContent, setHeroContent] = useState<SiteContent | null>(null);
-    const [isLoading, setIsLoading] = useState(true);
+    // ✅ CAMBIO CLAVE: Se eliminó el estado 'isLoading' para evitar el bloqueo de opacidad
 
     useEffect(() => {
-    // Cargar contenido sin bloquear el render
-    const loadHeroContent = async () => {
-        try {
-            const content = await getContentBySection('hero');
-            if (content.length > 0) {
-                setHeroContent(content[0]);
+        // Cargar contenido de Firebase (título/subtítulo)
+        const loadHeroContent = async () => {
+            try {
+                const content = await getContentBySection('hero');
+                if (content.length > 0) {
+                    setHeroContent(content[0]);
+                }
+            } catch (error) {
+                console.error('Error cargando imagen del hero:', error);
             }
-        } catch (error) {
-            console.error('Error cargando imagen del hero:', error);
-        } finally {
-            setIsLoading(false);
-        }
-    };
-    
-    loadHeroContent();
-    
-    // ✅ CLAVE: Desbloquear render después de 100ms aunque Firebase no responda
-    const timeout = setTimeout(() => {
-        if (isLoading) {
-            setIsLoading(false);
-        }
-    }, 100);
-    
-    return () => clearTimeout(timeout);
-}, []);
+        };
+        
+        loadHeroContent();
+        
+        // Se eliminó el setTimeout y el return para evitar el bloqueo del render de la imagen.
+    }, []);
 
-    // Optimizar la URL de la imagen (con fallback a la URL del preload)
-const optimizedImageUrl = heroContent?.imageUrl
-    ? optimizeCloudinaryUrl(heroContent.imageUrl)
-    : "https://res.cloudinary.com/dkoshgzxo/image/upload/f_auto,q_auto:eco,w_1920,c_limit,fl_progressive:steep/v1763335217/smart-kids/hero/kytzxyoxb659zf6pbjla.jpg";
+    // 2. Usar la URL optimizada INMEDIATAMENTE.
+    // Si heroContent es nulo (no ha cargado Firebase), usa la URL BASE fija.
+    const imageUrlToOptimize = heroContent?.imageUrl || CLOUDINARY_IMAGE_FALLBACK_URL;
+    const optimizedImageUrl = optimizeCloudinaryUrl(imageUrlToOptimize);
 
     return (
         <div className="relative bg-darker overflow-hidden min-h-screen">
@@ -62,24 +57,22 @@ const optimizedImageUrl = heroContent?.imageUrl
             <div className="absolute inset-0 w-full h-full">
                 <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/30 to-transparent z-10"></div>
                 
-                {/* ✅ Skeleton de fondo mientras carga */}
-                {isLoading && (
-                    <div className="absolute inset-0 w-full h-full bg-dark/20 animate-pulse"></div>
-                )}
+                {/* ❌ Se eliminó el Skeleton de fondo */}
                 
-                {/* ✅ Imagen siempre presente (aunque esté loading) */}
+                {/* ✅ IMAGEN: Opacidad Fija e Instantánea */}
                 <img
                     src={optimizedImageUrl}
                     alt={heroContent?.title || "Estudiante escuchando podcast"}
                     className="absolute inset-0 w-full h-full object-cover"
-                    style={{ opacity: isLoading ? 0 : 0.5 }}
+                    // **CAMBIO CLAVE**: Opacidad Fija en 0.5 (visible inmediatamente)
+                    style={{ opacity: 0.5 }} 
                     loading="eager"
                     fetchPriority="high"
                     decoding="async"
                 />
             </div>
             
-            {/* Contenido del hero */}
+            {/* Contenido del hero (texto) */}
             <div className="container mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="relative flex items-center min-h-screen pt-20">
                     <div className="relative z-10 text-center lg:text-left py-16 lg:w-1/2">
@@ -102,7 +95,7 @@ const optimizedImageUrl = heroContent?.imageUrl
     );
 };
 
-// ... (El resto del código como TrendingSection, FeaturedEpisodesSection, etc. es el mismo)
+// --- RESTO DE COMPONENTES SIN CAMBIOS ---
 
 const TrendingSection: React.FC = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
