@@ -118,8 +118,8 @@ const TrendingSection: React.FC = () => {
         const fetchTrending = async () => {
             try {
                 setIsLoading(true);
-                const episodes = await api.getEpisodes();
-                const trending = [...episodes].sort((a, b) => b.plays - a.plays)[0];
+                const { getTrendingEpisode } = await import('../src/firebase/trending');
+                const trending = await getTrendingEpisode();
                 setTrendingEpisode(trending);
             } catch (error) {
                 console.error("Failed to fetch trending episode:", error);
@@ -151,33 +151,73 @@ const TrendingSection: React.FC = () => {
     return (
         <>
             <div id="trending" className="bg-light-gray py-24 sm:py-32">
-                <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-                    <SectionHeader title="Popular & Tendencia" subtitle="El episodio del momento" textColor="dark" hideLink />
-                    {isLoading ? <TrendingSkeleton /> : trendingEpisode && (
-                        <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 items-center gap-12 lg:gap-16">
-                            <div className="w-full max-w-md mx-auto aspect-square rounded-2xl overflow-hidden shadow-2xl shadow-dark/20">
-                               <img src={trendingEpisode.thumbnail} alt={trendingEpisode.title} className="w-full h-full object-cover" />
-                            </div>
-                            <div className="text-center lg:text-left">
-                                <p className="font-semibold text-primary mb-2">{trendingEpisode.podcaster.name} - {trendingEpisode.podcaster.grade}</p>
-                                <h3 className="font-heading text-4xl lg:text-5xl font-bold text-darker mb-4">{trendingEpisode.title}</h3>
-                                <p className="text-dark/70 text-lg mb-6">{trendingEpisode.description.substring(0, 150)}...</p>
-                                <p className="text-dark/50 text-sm mb-8">Publicado: {trendingEpisode.date}</p>
-                                <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4">
-                                    <button onClick={() => playEpisode(trendingEpisode)} className="w-full sm:w-auto bg-primary text-darker font-bold py-3 px-6 rounded-xl flex items-center justify-center gap-2 hover:bg-primary/90 transition-all duration-300 transform hover:scale-105">
-                                        <Play size={20} /> Reproducir
-                                    </button>
-                                    <button onClick={() => setIsModalOpen(true)} className="w-full sm:w-auto bg-darker text-light font-bold py-3 px-6 rounded-xl hover:bg-dark transition-colors duration-300">
-                                        Ver más
-                                    </button>
-                                </div>
-                            </div>
+            <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+                <SectionHeader title="Popular & Tendencia" subtitle="El episodio del momento" textColor="dark" hideLink />
+                {isLoading ? <TrendingSkeleton /> : trendingEpisode && (
+                    <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 items-center gap-12 lg:gap-16">
+                        {/* Imagen */}
+                        <div className="w-full max-w-md mx-auto aspect-square rounded-2xl overflow-hidden shadow-2xl shadow-dark/20">
+                           <img 
+                               src={trendingEpisode.thumbnail} 
+                               alt={trendingEpisode.title} 
+                               className="w-full h-full object-cover" 
+                           />
                         </div>
-                    )}
-                </div>
+                        
+                        {/* Info + Botones */}
+                        <div className="text-center lg:text-left">
+                            <p className="font-semibold text-primary mb-2">
+                                {trendingEpisode.author || trendingEpisode.podcaster?.name} - {trendingEpisode.grade || trendingEpisode.podcaster?.grade}
+                            </p>
+                            <h3 className="font-heading text-4xl lg:text-5xl font-bold text-darker mb-4">
+                                {trendingEpisode.title}
+                            </h3>
+                            <p className="text-dark/70 text-lg mb-6">
+                                {trendingEpisode.description?.substring(0, 150)}...
+                            </p>
+                            
+                            {/* Fecha de publicación */}
+                            {trendingEpisode.date && (
+                                <p className="text-dark/50 text-sm mb-8">
+                                    Publicado: {trendingEpisode.date}
+                                </p>
+                            )}
+                            
+                            <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4">
+    {/* Botón 1: Solo reproducir (sin modal) */}
+    <button 
+        onClick={() => {
+            console.log('🎵 Playing episode:', trendingEpisode);
+            playEpisode(trendingEpisode);
+        }} 
+        className="w-full sm:w-auto bg-primary text-darker font-bold py-3 px-6 rounded-xl flex items-center justify-center gap-2 hover:bg-primary/90 transition-all duration-300 transform hover:scale-105"
+    >
+        <Play size={20} /> Reproducir
+    </button>
+    
+    {/* Botón 2: Solo ver info (sin reproducir) */}
+    <button 
+        onClick={() => {
+            console.log('📖 Opening modal:', trendingEpisode);
+            setIsModalOpen(true);
+        }} 
+        className="w-full sm:w-auto bg-darker text-light font-bold py-3 px-6 rounded-xl hover:bg-dark transition-colors duration-300"
+    >
+        Ver más info
+    </button>
+</div>
+                        </div>
+                    </div>
+                )}
             </div>
-            {isModalOpen && trendingEpisode && <TrendingEpisodeModal episode={trendingEpisode} onClose={() => setIsModalOpen(false)} />}
-        </>
+        </div>
+        {isModalOpen && trendingEpisode && (
+            <TrendingEpisodeModal 
+                episode={trendingEpisode} 
+                onClose={() => setIsModalOpen(false)} 
+            />
+        )}
+    </>
     );
 };
 
@@ -268,6 +308,9 @@ const FeaturesCtaSection: React.FC = () => {
     );
 };
 
+// 1. URL DE CLOUDINARY PARA TESTIMONIOS (Tu imagen)
+const TESTIMONIALS_BG_URL = "https://res.cloudinary.com/dkoshgzxo/image/upload/v1763396229/Testimonio_qiobjv.jpg"; 
+
 const TestimonialsSection: React.FC = () => {
     const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -310,6 +353,7 @@ const TestimonialsSection: React.FC = () => {
     `;
 
     const TestimonialSkeleton: React.FC = () => (
+        // El esqueleto debe coincidir con el fondo de la sección
         <div className="bg-dark p-8 sm:p-12 rounded-2xl flex flex-col text-center h-[320px] sm:h-[280px] justify-between animate-pulse">
             <div className="space-y-3">
                 <div className="h-6 bg-darker rounded w-full"></div>
@@ -324,64 +368,79 @@ const TestimonialsSection: React.FC = () => {
     );
 
     return (
+        // *** CAMBIO CLAVE 1: Restaurar el fondo principal a oscuro (bg-darker) ***
         <div className="relative py-24 sm:py-32 bg-darker overflow-hidden">
-            <style>{animationStyle}</style>
-             <img src="https://picsum.photos/seed/testimonials-bg/1920/1080" alt="Estudiantes colaborando" className="absolute inset-0 w-full h-full object-cover opacity-10 blur-sm" />
-             <div className="absolute inset-0 bg-gradient-to-t from-darker via-darker/90 to-darker"></div>
-            <div className="relative container mx-auto px-4 sm:px-6 lg:px-8">
-                 <div className="max-w-3xl mx-auto text-center mb-16">
-                    <h2 className="font-heading text-4xl lg:text-5xl font-bold text-light">Lo que dicen de nosotros</h2>
-                    <p className="mt-4 text-lg text-light/70">Voces de nuestra comunidad que inspiran y validan nuestro proyecto.</p>
-                </div>
 
-                <div className="max-w-3xl mx-auto">
-                    {isLoading ? <TestimonialSkeleton /> : currentTestimonial && (
-    <div key={currentIndex} className="bg-dark p-6 sm:p-10 rounded-2xl shadow-lg flex flex-col text-center min-h-[380px] animate-content-fade-in">
-        <div className="flex-1 flex items-center justify-center py-4">
-            <p className="text-light/90 italic text-base sm:text-lg leading-relaxed max-w-2xl">
-                "{currentTestimonial.content}"
-            </p>
-        </div>
+        {/* Imagen de fondo más visible */}
+        <img 
+            src={TESTIMONIALS_BG_URL} 
+            alt="Estudiantes en estudio de podcast" 
+            className="absolute inset-0 w-full h-full object-cover" 
+            style={{ opacity: 0.35 }}  // ← MÁS LUMINOSA
+        />
 
-        {currentTestimonial.rating && (
-            <div className="flex justify-center gap-1 my-4">
-                {[...Array(5)].map((_, i) => (
-                    <span key={i} className={`text-xl ${i < currentTestimonial.rating! ? 'text-yellow-500' : 'text-light/20'}`}>
-                        ★
-                    </span>
-                ))}
+        {/* Gradiente suavizado (permite ver más imagen sin perder legibilidad) */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-black/20 to-transparent z-10"></div>
+
+        <div className="relative container mx-auto px-4 sm:px-6 lg:px-8 z-20">
+            <div className="max-w-3xl mx-auto text-center mb-16">
+                <h2 className="font-heading text-4xl lg:text-5xl font-bold text-light">
+                    Lo que dicen de nosotros
+                </h2>
+                <p className="mt-4 text-lg text-light/70">
+                    Voces de nuestra comunidad que inspiran y validan nuestro proyecto.
+                </p>
             </div>
-        )}
 
-        <div className="pt-4 border-t border-light/10">
-            <p className="font-bold text-light text-lg">{currentTestimonial.name}</p>
-            <p className="text-primary text-sm font-semibold mt-1">{currentTestimonial.role}</p>
+            <div className="max-w-3xl mx-auto">
+                {isLoading ? <TestimonialSkeleton /> : currentTestimonial && (
+                    <div key={currentIndex} className="bg-dark p-6 sm:p-10 rounded-2xl shadow-lg flex flex-col text-center min-h-[380px] animate-content-fade-in">
+                        
+                        <div className="flex-1 flex items-center justify-center py-4">
+                            <p className="text-light/90 italic text-base sm:text-lg leading-relaxed max-w-2xl">
+                                "{currentTestimonial.content}"
+                            </p>
+                        </div>
+
+                        {currentTestimonial.rating && (
+                            <div className="flex justify-center gap-1 my-4">
+                                {[...Array(5)].map((_, i) => (
+                                    <span key={i} className={`text-xl ${i < currentTestimonial.rating! ? 'text-yellow-500' : 'text-light/20'}`}>
+                                        ★
+                                    </span>
+                                ))}
+                            </div>
+                        )}
+
+                        <div className="pt-4 border-t border-light/10">
+                            <p className="font-bold text-light text-lg">{currentTestimonial.name}</p>
+                            <p className="text-primary text-sm font-semibold mt-1">{currentTestimonial.role}</p>
+                        </div>
+                    </div>
+                )}
+
+                <div className="flex justify-center items-center gap-4 mt-8">
+                    <button
+                        onClick={handlePrev}
+                        disabled={isLoading}
+                        className="border-2 border-light/30 text-light hover:bg-light/10 rounded-full p-3 transition-colors duration-300 disabled:opacity-50"
+                        aria-label="Testimonio anterior"
+                    >
+                        <ChevronLeft size={24} />
+                    </button>
+                    <button
+                        onClick={handleNext}
+                        disabled={isLoading}
+                        className="bg-primary text-darker hover:bg-primary/90 rounded-full p-3 transition-colors duration-300 disabled:opacity-50"
+                        aria-label="Siguiente testimonio"
+                    >
+                        <ChevronRight size={24} />
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
-)}
-
-                    <div className="flex justify-center items-center gap-4 mt-8">
-                        <button
-                            onClick={handlePrev}
-                            disabled={isLoading}
-                            className="border-2 border-primary text-primary hover:bg-primary hover:text-darker rounded-full p-3 transition-colors duration-300 disabled:opacity-50"
-                            aria-label="Testimonio anterior"
-                        >
-                            <ChevronLeft size={24} />
-                        </button>
-                        <button
-                            onClick={handleNext}
-                            disabled={isLoading}
-                            className="bg-primary text-darker hover:bg-primary/90 rounded-full p-3 transition-colors duration-300 disabled:opacity-50"
-                            aria-label="Siguiente testimonio"
-                        >
-                            <ChevronRight size={24} />
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    );
+);
 };
 
 const SubscribeSection: React.FC = () => {

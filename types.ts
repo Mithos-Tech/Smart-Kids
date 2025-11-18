@@ -4,17 +4,21 @@ export interface Podcaster {
 }
 
 export interface Episode {
-    id: number;
+    id: number | string; // ← Permitir string también
     title: string;
     description: string;
-    podcaster: Podcaster;
+    podcaster?: Podcaster; // ← Hacer opcional
+    author?: string;       // ← Agregar este campo
+    grade?: string;        // ← Agregar este campo
+    section?: string;      // ← Agregar este campo
     category: string;
     duration: number;
     plays: number;
-    date: string;
+    date?: string;
     thumbnail?: string;
-    color: string;
-    embedUrl?: string; // ← Agrega esta línea
+    color?: string;
+    embedUrl?: string;
+    audioUrl?: string;
 }
 
 export interface Professor {
