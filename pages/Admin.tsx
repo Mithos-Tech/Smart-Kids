@@ -341,6 +341,13 @@ const SubscribersView = () => (
 // --- MAIN ADMIN LAYOUT ---
 
 const Admin = () => {
+  const { episodes } = useEpisodes();
+  const { team } = useTeam();
+  const { gallery } = useGallery();
+  const EPISODES = episodes;
+  const TEAM = team;
+  const GALLERY = gallery;
+
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isEpisodeModalOpen, setIsEpisodeModalOpen] = useState(false);
   const [isTeacherModalOpen, setIsTeacherModalOpen] = useState(false);

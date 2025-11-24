@@ -1,0 +1,127 @@
+diff --git a/pages/Admin.tsx b/pages/Admin.tsx
+index 161f058..100414a 100644
+--- a/pages/Admin.tsx
++++ b/pages/Admin.tsx
+@@ -123,8 +123,21 @@ const EpisodesView = ({ onNew }: { onNew: () => void }) => (
+                   </td>
+                   <td className="px-6 py-4 text-right">
+                     <div className="flex items-center justify-end gap-2 opacity-60 group-hover:opacity-100 transition-opacity">
+-                      <button className="p-2 hover:bg-white/10 rounded-lg text-gray-400 hover:text-primary transition-colors" title="Editar"><Edit size={16} /></button>
+-                      <button className="p-2 hover:bg-white/10 rounded-lg text-gray-400 hover:text-red-500 transition-colors" title="Eliminar"><Trash2 size={16} /></button>
++                      <button 
++                    onClick={() => {
++                      setEditingItem(ep);
++                      setIsEpisodeModalOpen(true);
++                    }}
++                    className="p-2 text-blue-400 hover:bg-blue-500/10 rounded-lg transition-colors"
++                  >
++                    <Edit size={16} />
++                  </button>
++                  <button 
++                    onClick={() => handleDeleteEpisode(ep.id)}
++                    className="p-2 text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
++                  >
++                    <Trash2 size={16} />
++                  </button>
+                     </div>
+                   </td>
+                 </tr>
+@@ -341,26 +354,48 @@ const SubscribersView = () => (
+ // --- MAIN ADMIN LAYOUT ---
+ 
+ const Admin = () => {
++  const { episodes, loading: loadingEpisodes } = useEpisodes();
++  const { team, loading: loadingTeam } = useTeam();
++  const { gallery, loading: loadingGallery } = useGallery();
++
++  const [currentView, setCurrentView] = useState<ViewType>('dashboard');
+   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+-  const [isEpisodeModalOpen, setIsEpisodeModalOpen] = useState(false);
+-  const [isTeacherModalOpen, setIsTeacherModalOpen] = useState(false);
+-  const [isSaving, setIsSaving] = useState(false); // Global loading state for modals
+-  const [activeTab, setActiveTab] = useState<ViewType>('dashboard');
+-  const [isFeaturedToggle, setIsFeaturedToggle] = useState(false); // State for featured toggle in modal
++  const [editingItem, setEditingItem] = useState<any>(null);
+   const navigate = useNavigate();
+ 
++  const EPISODES = episodes;
++  const TEAM = team;
++  const GALLERY = gallery;
++
+   const handleLogout = () => {
+     localStorage.removeItem('smart_auth_token');
+     navigate('/login');
+   };
+ 
+   // Simulating backend save delay
+-  const handleModalSave = (closeModal: () => void) => {
++  const handleSaveEpisode = async (data: any, imageFile?: File) => {
+     setIsSaving(true);
+-    setTimeout(() => {
+-        setIsSaving(false);
+-        closeModal();
+-    }, 1500);
++    try {
++      if (editingItem) {
++        await updateEpisode(editingItem.id, data, imageFile);
++      } else {
++        await createEpisode(data, imageFile);
++      }
++      setIsEpisodeModalOpen(false);
++      setEditingItem(null);
++      window.location.reload(); // Refrescar data
++    } catch (error) {
++      alert('Error al guardar');
++    } finally {
++      setIsSaving(false);
++    }
++  };
++
++  const handleDeleteEpisode = async (id: string) => {
++    if (confirm('¿Eliminar este episodio?')) {
++      await deleteEpisode(id);
++      window.location.reload();
++    }
+   };
+ 
+   const renderContent = () => {
+@@ -531,8 +566,11 @@ const Admin = () => {
+ 
+                     <div className="p-6 border-t border-white/10 flex justify-end gap-4 bg-[#0a0f1e]">
+                         <button onClick={() => setIsEpisodeModalOpen(false)} disabled={isSaving} className="px-6 py-2.5 rounded-xl text-gray-400 hover:text-white font-medium transition-colors disabled:opacity-50">Cancelar</button>
+-                        <button 
+-                            onClick={() => handleModalSave(() => setIsEpisodeModalOpen(false))} 
++                        <button
++                            onClick={() => {
++                              const form = document.querySelector('form');
++                              if (form) form.dispatchEvent(new Event('submit'));
++                            }}
+                             disabled={isSaving}
+                             className="px-6 py-2.5 rounded-xl bg-primary hover:bg-primary-dark text-white font-bold shadow-lg flex items-center gap-2 disabled:opacity-80 disabled:cursor-not-allowed"
+                         >
+@@ -554,12 +592,25 @@ const Admin = () => {
+                         <button onClick={() => setIsTeacherModalOpen(false)} disabled={isSaving} className="text-gray-400 hover:text-white transition-colors disabled:opacity-50"><X size={24}/></button>
+                     </div>
+                     <div className="p-8 space-y-6">
++                        <form onSubmit={(e) => {
++                          e.preventDefault();
++                          const formData = new FormData(e.currentTarget);
++                          handleSaveEpisode({
++                            title: formData.get('title'),
++                            author: formData.get('author'),
++                            spotifyUrl: formData.get('spotifyUrl'),
++                            featured: isFeaturedToggle,
++                            // Añade los demás campos que necesites
++                          });
++                        }}></form>
+                          <div className="grid grid-cols-1 gap-4">
+                              <input type="text" placeholder="Nombre Completo" className="w-full bg-[#0a0f1e] border border-white/10 rounded-xl px-4 py-3 text-white focus:border-primary outline-none" />
+                              <input type="text" placeholder="Rol (ej: Docente)" className="w-full bg-[#0a0f1e] border border-white/10 rounded-xl px-4 py-3 text-white focus:border-primary outline-none" />
+                              <textarea placeholder="Cita inspiradora..." rows={3} className="w-full bg-[#0a0f1e] border border-white/10 rounded-xl px-4 py-3 text-white focus:border-primary outline-none" />
+                          </div>
++                    </form>
+                     </div>
++
+                     <div className="p-6 border-t border-white/10 flex justify-end gap-4 bg-[#0a0f1e]">
+                         <button onClick={() => setIsTeacherModalOpen(false)} disabled={isSaving} className="px-6 py-2.5 rounded-xl text-gray-400 hover:text-white font-medium disabled:opacity-50">Cancelar</button>
+                         <button 
