@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { LayoutDashboard, Mic, Users, Image, LogOut, Plus, Edit, Trash2, Mail, X, Save, Search, Ghost } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useEpisodes, useTeam, useGallery } from '../firebase/hooks';
-import { createEpisode, updateEpisode, deleteEpisode } from '../firebase/adminFunctions';
+import { createEpisode, updateEpisode, deleteEpisode, createTeamMember, updateTeamMember, deleteTeamMember, createGalleryItem, deleteGalleryItem } from '../firebase/adminFunctions';
 
 type ViewType = 'dashboard' | 'episodes' | 'teachers' | 'gallery' | 'subscribers';
 
@@ -86,6 +86,61 @@ const EpisodesView = ({ onNew, episodes, onEdit, onDelete }: any) => (
   </div>
 );
 
+const TeachersView = ({ team, onNew, onEdit, onDelete }: any) => (
+  <div className="bg-[#1a1f35]/60 rounded-2xl border border-white/10 overflow-hidden">
+    <div className="p-6 border-b border-white/10 flex justify-between items-center">
+      <h3 className="font-bold text-lg text-white">Equipo Docente</h3>
+      <button onClick={onNew} className="bg-primary px-4 py-2 rounded-lg text-sm font-bold text-white flex items-center gap-2">
+        <Plus size={16} /> Nuevo
+      </button>
+    </div>
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
+      {team.map((member: any) => (
+        <div key={member.id} className="bg-[#0a0f1e] rounded-xl overflow-hidden border border-white/10">
+          <img src={member.imageUrl} className="w-full h-48 object-cover" alt="" />
+          <div className="p-4">
+            <h4 className="font-bold text-white">{member.name}</h4>
+            <p className="text-sm text-gray-400 mb-2">{member.role}</p>
+            <p className="text-xs text-gray-500 italic line-clamp-2">"{member.quote}"</p>
+            <div className="flex gap-2 mt-4">
+              <button onClick={() => onEdit(member)} className="flex-1 p-2 bg-blue-500/10 text-blue-400 rounded-lg hover:bg-blue-500/20">
+                <Edit size={16} className="mx-auto" />
+              </button>
+              <button onClick={() => onDelete(member.id)} className="flex-1 p-2 bg-red-500/10 text-red-400 rounded-lg hover:bg-red-500/20">
+                <Trash2 size={16} className="mx-auto" />
+              </button>
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+);
+
+const GalleryView = ({ gallery, onNew, onDelete }: any) => (
+  <div className="bg-[#1a1f35]/60 rounded-2xl border border-white/10 overflow-hidden">
+    <div className="p-6 border-b border-white/10 flex justify-between items-center">
+      <h3 className="font-bold text-lg text-white">Galería de Fotos</h3>
+      <button onClick={onNew} className="bg-primary px-4 py-2 rounded-lg text-sm font-bold text-white flex items-center gap-2">
+        <Plus size={16} /> Nueva Foto
+      </button>
+    </div>
+    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-6">
+      {gallery.map((item: any) => (
+        <div key={item.id} className="relative group">
+          <img src={item.imageUrl} className="w-full aspect-square object-cover rounded-xl" alt="" />
+          <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl flex items-center justify-center">
+            <button onClick={() => onDelete(item.id)} className="p-3 bg-red-500 rounded-full text-white hover:bg-red-600">
+              <Trash2 size={20} />
+            </button>
+          </div>
+          <p className="text-xs text-gray-400 mt-2">{item.title}</p>
+        </div>
+      ))}
+    </div>
+  </div>
+);
+
 const Admin = () => {
   const { episodes, loading: loadingEpisodes } = useEpisodes();
   const { team } = useTeam();
@@ -107,6 +162,24 @@ const Admin = () => {
     imageUrl: '',
     featured: false
   });
+
+  
+  const [isTeacherModalOpen, setIsTeacherModalOpen] = useState(false);
+  const [isGalleryModalOpen, setIsGalleryModalOpen] = useState(false);
+  const [teacherFormData, setTeacherFormData] = useState({
+    name: '',
+    role: '',
+    area: '',
+    quote: '',
+    imageUrl: ''
+  });
+  const [galleryFormData, setGalleryFormData] = useState({
+    title: '',
+    imageUrl: '',
+    cols: 1,
+    rows: 1
+  });
+
 
   const handleLogout = () => {
     localStorage.removeItem('smart_auth_token');
@@ -171,6 +244,75 @@ const Admin = () => {
     }
   };
 
+  
+  // TEACHERS HANDLERS
+  const handleOpenTeacherModal = (member?: any) => {
+    if (member) {
+      setEditingItem(member);
+      setTeacherFormData(member);
+    } else {
+      setEditingItem(null);
+      setTeacherFormData({ name: '', role: '', area: '', quote: '', imageUrl: '' });
+    }
+    setIsTeacherModalOpen(true);
+  };
+  
+  const handleSaveTeacher = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSaving(true);
+    try {
+      if (editingItem) {
+        await updateTeamMember(editingItem.id, teacherFormData);
+        alert('Miembro actualizado');
+      } else {
+        await createTeamMember(teacherFormData);
+        alert('Miembro agregado');
+      }
+      setIsTeacherModalOpen(false);
+      window.location.reload();
+    } catch (error) {
+      alert('Error al guardar');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+  
+  const handleDeleteTeacher = async (id: string) => {
+    if (confirm('¿Eliminar este miembro?')) {
+      await deleteTeamMember(id);
+      window.location.reload();
+    }
+  };
+  
+  // GALLERY HANDLERS
+  const handleOpenGalleryModal = () => {
+    setGalleryFormData({ title: '', imageUrl: '', cols: 1, rows: 1 });
+    setIsGalleryModalOpen(true);
+  };
+  
+  const handleSaveGallery = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSaving(true);
+    try {
+      await createGalleryItem(galleryFormData);
+      alert('Foto agregada');
+      setIsGalleryModalOpen(false);
+      window.location.reload();
+    } catch (error) {
+      alert('Error al guardar');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+  
+  const handleDeleteGallery = async (id: string) => {
+    if (confirm('¿Eliminar esta foto?')) {
+      await deleteGalleryItem(id);
+      window.location.reload();
+    }
+  };
+
+
   if (loadingEpisodes) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#0a0f1e]">
@@ -224,8 +366,22 @@ const Admin = () => {
             onDelete={handleDelete}
           />
         )}
-        {currentView === 'teachers' && <EmptyState title="Equipo" description="Próximamente" />}
-        {currentView === 'gallery' && <EmptyState title="Galería" description="Próximamente" />}
+        {currentView === 'teachers' && (
+          <TeachersView
+            team={team}
+            onNew={() => handleOpenTeacherModal()}
+            onEdit={handleOpenTeacherModal}
+            onDelete={handleDeleteTeacher}
+          />
+        )}
+        {currentView === 'gallery' && (
+          <GalleryView
+            gallery={gallery}
+            onNew={() => handleOpenGalleryModal()}
+            onDelete={handleDeleteGallery}
+          />
+        )}
+
         {currentView === 'subscribers' && <EmptyState title="Suscriptores" description="Próximamente" />}
       </main>
 
@@ -341,6 +497,159 @@ const Admin = () => {
           </div>
         </div>
       )}
+
+      {/* Teacher Modal */}
+      {isTeacherModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/80" onClick={() => !isSaving && setIsTeacherModalOpen(false)}></div>
+          <div className="relative bg-[#1a1f35] rounded-2xl w-full max-w-xl">
+            <div className="p-6 border-b border-white/10 flex justify-between items-center">
+              <h3 className="text-xl font-bold">{editingItem ? 'Editar' : 'Nuevo'} Miembro</h3>
+              <button onClick={() => setIsTeacherModalOpen(false)} disabled={isSaving}>
+                <X size={24} />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveTeacher} className="p-6 space-y-4">
+              <input
+                type="text"
+                placeholder="Nombre completo"
+                value={teacherFormData.name}
+                onChange={(e) => setTeacherFormData({ ...teacherFormData, name: e.target.value })}
+                className="w-full bg-[#0a0f1e] border border-white/10 rounded-xl px-4 py-3 text-white"
+                required
+              />
+              <input
+                type="text"
+                placeholder="Rol (ej: Docente)"
+                value={teacherFormData.role}
+                onChange={(e) => setTeacherFormData({ ...teacherFormData, role: e.target.value })}
+                className="w-full bg-[#0a0f1e] border border-white/10 rounded-xl px-4 py-3 text-white"
+                required
+              />
+              <input
+                type="text"
+                placeholder="Área"
+                value={teacherFormData.area}
+                onChange={(e) => setTeacherFormData({ ...teacherFormData, area: e.target.value })}
+                className="w-full bg-[#0a0f1e] border border-white/10 rounded-xl px-4 py-3 text-white"
+                required
+              />
+              <textarea
+                placeholder="Cita inspiradora"
+                value={teacherFormData.quote}
+                onChange={(e) => setTeacherFormData({ ...teacherFormData, quote: e.target.value })}
+                className="w-full bg-[#0a0f1e] border border-white/10 rounded-xl px-4 py-3 text-white"
+                rows={3}
+                required
+              />
+              <input
+                type="url"
+                placeholder="URL de imagen"
+                value={teacherFormData.imageUrl}
+                onChange={(e) => setTeacherFormData({ ...teacherFormData, imageUrl: e.target.value })}
+                className="w-full bg-[#0a0f1e] border border-white/10 rounded-xl px-4 py-3 text-white"
+                required
+              />
+
+              <div className="flex gap-4 pt-4">
+                <button
+                  type="button"
+                  onClick={() => setIsTeacherModalOpen(false)}
+                  disabled={isSaving}
+                  className="flex-1 px-6 py-3 rounded-xl border border-white/10 hover:bg-white/5"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSaving}
+                  className="flex-1 px-6 py-3 rounded-xl bg-primary hover:bg-primary-dark font-bold"
+                >
+                  {isSaving ? 'Guardando...' : 'Guardar'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Gallery Modal */}
+      {isGalleryModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/80" onClick={() => !isSaving && setIsGalleryModalOpen(false)}></div>
+          <div className="relative bg-[#1a1f35] rounded-2xl w-full max-w-xl">
+            <div className="p-6 border-b border-white/10 flex justify-between items-center">
+              <h3 className="text-xl font-bold">Nueva Foto</h3>
+              <button onClick={() => setIsGalleryModalOpen(false)} disabled={isSaving}>
+                <X size={24} />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveGallery} className="p-6 space-y-4">
+              <input
+                type="text"
+                placeholder="Título"
+                value={galleryFormData.title}
+                onChange={(e) => setGalleryFormData({ ...galleryFormData, title: e.target.value })}
+                className="w-full bg-[#0a0f1e] border border-white/10 rounded-xl px-4 py-3 text-white"
+                required
+              />
+              <input
+                type="url"
+                placeholder="URL de imagen"
+                value={galleryFormData.imageUrl}
+                onChange={(e) => setGalleryFormData({ ...galleryFormData, imageUrl: e.target.value })}
+                className="w-full bg-[#0a0f1e] border border-white/10 rounded-xl px-4 py-3 text-white"
+                required
+              />
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-xs text-gray-400 mb-2 block">Columnas</label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="2"
+                    value={galleryFormData.cols}
+                    onChange={(e) => setGalleryFormData({ ...galleryFormData, cols: parseInt(e.target.value) })}
+                    className="w-full bg-[#0a0f1e] border border-white/10 rounded-xl px-4 py-3 text-white"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-gray-400 mb-2 block">Filas</label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="2"
+                    value={galleryFormData.rows}
+                    onChange={(e) => setGalleryFormData({ ...galleryFormData, rows: parseInt(e.target.value) })}
+                    className="w-full bg-[#0a0f1e] border border-white/10 rounded-xl px-4 py-3 text-white"
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-4 pt-4">
+                <button
+                  type="button"
+                  onClick={() => setIsGalleryModalOpen(false)}
+                  disabled={isSaving}
+                  className="flex-1 px-6 py-3 rounded-xl border border-white/10 hover:bg-white/5"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSaving}
+                  className="flex-1 px-6 py-3 rounded-xl bg-primary hover:bg-primary-dark font-bold"
+                >
+                  {isSaving ? 'Guardando...' : 'Guardar'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };
