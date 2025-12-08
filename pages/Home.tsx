@@ -2,6 +2,8 @@ import React, { useRef, useState, useEffect } from 'react';
 import { motion, useScroll, useTransform, AnimatePresence, useMotionTemplate, useMotionValue } from 'framer-motion';
 import { Play, ArrowRight, Clock, Headphones, Music2, Star, Send, Instagram, Twitter, Facebook, Linkedin, Sparkles, BarChart3, Trophy, Quote, ChevronRight, ChevronLeft, ExternalLink, Heart, TrendingUp, Bell } from 'lucide-react';
 import { TESTIMONIALS } from '../constants';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { db } from '../firebase/config';
 import { useEpisodes, useTeam } from '../firebase/hooks';
 import { Link } from 'react-router-dom';
 
@@ -707,6 +709,30 @@ const SectionTestimonials = () => {
 };
 
 const SectionCommunityHub = () => {
+  const [email, setEmail] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState('');
+
+  const handleSubscribe = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setMessage('');
+
+    try {
+      await addDoc(collection(db, 'subscribers'), {
+        email,
+        date: serverTimestamp()
+      });
+      setMessage('¡Gracias por suscribirte! 🎉');
+      setEmail('');
+    } catch (error) {
+      setMessage('Error al suscribirse. Intenta de nuevo.');
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const mouseX = useMotionValue(0);
   const mouseY = useMotionValue(0);
 
@@ -768,18 +794,32 @@ const SectionCommunityHub = () => {
                   <h3 className="text-2xl font-bold text-white mb-2">Mantente al día</h3>
                   <p className="text-sm text-gray-500 mb-6">Únete a más de 1,200 suscriptores felices.</p>
                   
-                  <div className="space-y-4">
+                  <form onSubmit={handleSubscribe} className="space-y-4">
                      <div>
                         <label className="text-xs font-bold text-gray-400 uppercase ml-1 mb-2 block">Tu Correo Electrónico</label>
                         <input 
-                          type="email" 
+                          type="email"
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
                           placeholder="ejemplo@escuela.edu" 
                           className="w-full bg-white/5 border border-white/10 rounded-xl px-5 py-4 text-white focus:outline-none focus:border-primary transition-colors"
+                          required
+                          disabled={loading}
                         />
                      </div>
-                     <button className="w-full py-4 bg-primary hover:bg-primary-dark text-white font-bold rounded-xl transition-all shadow-lg shadow-primary/20 flex items-center justify-center gap-2 group-hover:scale-[1.02]">
-                        Suscribirme Ahora <Send size={18} />
+                     {message && (
+                       <div className={`text-sm p-3 rounded-xl ${message.includes('Gracias') ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-400'}`}>
+                         {message}
+                       </div>
+                     )}
+                     <button 
+                       type="submit"
+                       disabled={loading}
+                       className="w-full py-4 bg-primary hover:bg-primary-dark text-white font-bold rounded-xl transition-all shadow-lg shadow-primary/20 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                     >
+                       {loading ? 'Enviando...' : 'Suscribirme Ahora'} <Send size={18} />
                      </button>
+                  </form>
                   </div>
                   
                   <div className="mt-6 pt-6 border-t border-white/5 flex items-center justify-center gap-2 text-xs text-gray-500">
@@ -789,7 +829,6 @@ const SectionCommunityHub = () => {
                </div>
             </div>
           </div>
-        </div>
       </Reveal>
     </section>
   );
