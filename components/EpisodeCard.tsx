@@ -1,35 +1,75 @@
-import React, { useState } from 'react';
-import { Play, Clock, Headphones, ExternalLink, Heart } from 'lucide-react';
+import React from 'react';
+import { Clock, Headphones, Heart } from 'lucide-react';
 import { Episode } from '../types';
-import { motion } from 'framer-motion';
 
 interface Props {
   episode: Episode;
+  currentLikes: number;
+  onLike: (episodeId: string, currentLikes: number) => void;
+  isLiking?: boolean;
 }
 
-export const EpisodeCard: React.FC<Props> = ({ episode }) => {
-  const [likes, setLikes] = useState(episode.likes);
-
-  const handleLike = () => {
-    alert('CLICK FUNCIONA!');
-    setLikes(prev => prev + 1);
+export const EpisodeCard: React.FC<Props> = ({ 
+  episode, 
+  currentLikes, 
+  onLike,
+  isLiking = false 
+}) => {
+  const handleLike = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onLike(episode.id, currentLikes);
   };
 
   return (
     <div className="group relative rounded-2xl overflow-hidden bg-card-bg border border-white/10 backdrop-blur-sm flex flex-col h-full">
       <div className="relative aspect-[4/3] overflow-hidden">
-        <img src={episode.imageUrl} alt={episode.title} className="w-full h-full object-cover" />
-        <button onClick={handleLike} type="button" style={{position: 'absolute', top: '12px', right: '12px', zIndex: 999, width: '40px', height: '40px', background: 'red', borderRadius: '50%', border: 'none', cursor: 'pointer'}}>
-          <Heart size={18} color="white" />
+        <img 
+          src={episode.imageUrl} 
+          alt={episode.title} 
+          className="w-full h-full object-cover" 
+        />
+        
+        {/* Botón de Like */}
+        <button 
+          onClick={handleLike}
+          disabled={isLiking}
+          className={`absolute top-3 right-3 z-10 w-10 h-10 rounded-full flex items-center justify-center backdrop-blur-md border transition-all duration-300 hover:scale-110 ${
+            isLiking 
+              ? 'bg-gray-500/20 border-gray-500 cursor-not-allowed' 
+              : 'bg-red-500/20 border-red-500/50 hover:bg-red-500/30'
+          }`}
+        >
+          <Heart 
+            size={18} 
+            className="text-red-500 fill-red-500" 
+          />
         </button>
       </div>
-      <a href={episode.spotifyUrl} target="_blank" rel="noopener noreferrer" className="p-5 flex flex-col flex-grow">
-        <h3 className="font-display font-bold text-lg mb-2">{episode.title}</h3>
-        <p className="text-sm text-gray-400 mb-3">{episode.author} • {episode.grade}</p>
-        <div className="pt-4 mt-auto border-t border-white/10 flex items-center justify-between text-xs">
-          <div><Clock size={14} /> {episode.duration}</div>
-          <div><Heart size={12} /> {likes}</div>
-          <div><Headphones size={14} /> {episode.plays}</div>
+
+      <a 
+        href={episode.spotifyUrl} 
+        target="_blank" 
+        rel="noopener noreferrer" 
+        className="p-5 flex flex-col flex-grow hover:bg-white/5 transition-colors"
+      >
+        <h3 className="font-display font-bold text-lg mb-2 line-clamp-2">
+          {episode.title}
+        </h3>
+        <p className="text-sm text-gray-400 mb-3">
+          {episode.author} • {episode.grade}
+        </p>
+
+        <div className="pt-4 mt-auto border-t border-white/10 flex items-center justify-between text-xs text-gray-400">
+          <div className="flex items-center gap-1">
+            <Clock size={14} /> {episode.duration}
+          </div>
+          <div className="flex items-center gap-1 text-red-500">
+            <Heart size={12} /> {currentLikes}
+          </div>
+          <div className="flex items-center gap-1">
+            <Headphones size={14} /> {episode.plays}
+          </div>
         </div>
       </a>
     </div>
