@@ -30,19 +30,23 @@ export const EpisodeCard: React.FC<Props> = ({
           className="w-full h-full object-cover" 
         />
         
-        {/* Botón de Like */}
+        {/* Botón de Like - Solo se activa en hover */}
         <button 
           onClick={handleLike}
           disabled={isLiking}
           className={`absolute top-3 right-3 z-10 w-10 h-10 rounded-full flex items-center justify-center backdrop-blur-md border transition-all duration-300 hover:scale-110 ${
             isLiking 
               ? 'bg-gray-500/20 border-gray-500 cursor-not-allowed' 
-              : 'bg-red-500/20 border-red-500/50 hover:bg-red-500/30'
+              : 'bg-white/10 border-white/20 hover:bg-red-500/30 hover:border-red-500'
           }`}
         >
           <Heart 
             size={18} 
-            className="text-red-500 fill-red-500" 
+            className={`transition-all duration-300 ${
+              isLiking 
+                ? 'text-gray-500' 
+                : 'text-white hover:text-red-500 hover:fill-red-500'
+            }`}
           />
         </button>
       </div>
@@ -65,7 +69,7 @@ export const EpisodeCard: React.FC<Props> = ({
             <Clock size={14} /> {episode.duration}
           </div>
           <div className="flex items-center gap-1 text-red-500">
-            <Heart size={12} /> {currentLikes}
+            <Heart size={12} className="fill-current" /> {currentLikes}
           </div>
           <div className="flex items-center gap-1">
             <Headphones size={14} /> {episode.plays}
