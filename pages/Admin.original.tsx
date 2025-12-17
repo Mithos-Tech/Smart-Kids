@@ -1,8 +1,11 @@
 import React, { useState } from 'react';
 import { LayoutDashboard, Mic, Users, Image, Settings, LogOut, Plus, Edit, Trash2, Mail, X, Upload, Link as LinkIcon, Save, Download, Search, MoreVertical, Bell, Menu, Star, Grid, Heart, Loader2, Ghost, FileBox } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { useEpisodes, useTeam, useGallery, useSubscribers } from '../firebase/hooks';
+import { useEpisodes, useTeam, useGallery } from '../firebase/hooks';
 import { createEpisode, updateEpisode, deleteEpisode, createTeamMember, updateTeamMember, deleteTeamMember, createGalleryItem, deleteGalleryItem } from '../firebase/adminFunctions';
+import { collection, getDocs } from 'firebase/firestore';
+import { db } from '../firebase/config';
+import { useEffect } from 'react';
 
 // --- TYPES ---
 type ViewType = 'dashboard' | 'episodes' | 'teachers' | 'gallery' | 'home_editor' | 'subscribers';
@@ -71,7 +74,7 @@ const DashboardView = ({ episodes, team, subscribers }: any) => (
   </div>
 );
 
-const EpisodesView = ({ episodes = [], onNew, onEdit, onDelete }: { episodes?: any[], onNew: () => void, onEdit?: (ep: any) => void, onDelete?: (id: string) => void }) => (
+const EpisodesView = ({ onNew }: { onNew: () => void }) => (
   <div className="bg-[#1a1f35]/60 backdrop-blur-xl rounded-2xl border border-white/10 overflow-hidden animate-fade-in">
     <div className="p-6 border-b border-white/10 flex flex-col sm:flex-row justify-between items-center gap-4">
       <h3 className="font-bold text-lg text-white">Catálogo de Episodios</h3>
@@ -86,7 +89,7 @@ const EpisodesView = ({ episodes = [], onNew, onEdit, onDelete }: { episodes?: a
       </div>
     </div>
     <div className="overflow-x-auto">
-      {episodes.length > 0 ? (
+      {EPISODES.length > 0 ? (
           <table className="w-full text-left text-sm text-gray-400">
             <thead className="bg-white/5 text-gray-200 uppercase text-xs">
               <tr>
@@ -97,7 +100,7 @@ const EpisodesView = ({ episodes = [], onNew, onEdit, onDelete }: { episodes?: a
               </tr>
             </thead>
             <tbody className="divide-y divide-white/10">
-              {episodes.map((ep) => (
+              {EPISODES.map((ep) => (
                 <tr key={ep.id} className="hover:bg-white/5 transition-colors group">
                   <td className="px-6 py-4 font-medium text-white">
                     <div className="flex items-center gap-4">
@@ -123,8 +126,8 @@ const EpisodesView = ({ episodes = [], onNew, onEdit, onDelete }: { episodes?: a
                   </td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex items-center justify-end gap-2 opacity-60 group-hover:opacity-100 transition-opacity">
-                      <button onClick={() => onEdit && onEdit(ep)} className="p-2 hover:bg-white/10 rounded-lg text-gray-400 hover:text-primary transition-colors" title="Editar"><Edit size={16} /></button>
-                      <button onClick={() => onDelete && onDelete(ep.id)} className="p-2 hover:bg-white/10 rounded-lg text-gray-400 hover:text-red-500 transition-colors" title="Eliminar"><Trash2 size={16} /></button>
+                      <button className="p-2 hover:bg-white/10 rounded-lg text-gray-400 hover:text-primary transition-colors" title="Editar"><Edit size={16} /></button>
+                      <button className="p-2 hover:bg-white/10 rounded-lg text-gray-400 hover:text-red-500 transition-colors" title="Eliminar"><Trash2 size={16} /></button>
                     </div>
                   </td>
                 </tr>
@@ -138,7 +141,7 @@ const EpisodesView = ({ episodes = [], onNew, onEdit, onDelete }: { episodes?: a
   </div>
 );
 
-const TeachersView = ({ team = [], onEdit, onDelete }: { team?: any[], onEdit: () => void, onDelete?: (id: string) => void }) => (
+const TeachersView = ({ onEdit }: { onEdit: () => void }) => (
     <div className="space-y-6 animate-fade-in">
         <div className="flex justify-between items-center">
             <div>
@@ -150,13 +153,13 @@ const TeachersView = ({ team = [], onEdit, onDelete }: { team?: any[], onEdit: (
             </button>
         </div>
 
-        {team.length > 0 ? (
+        {TEAM.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {team.map((member) => (
+                {TEAM.map((member) => (
                     <div key={member.id} className="bg-[#1a1f35]/60 backdrop-blur-xl border border-white/10 rounded-2xl p-6 flex flex-col gap-4 group hover:border-primary/30 transition-all relative overflow-hidden">
                         <div className="absolute top-0 right-0 p-4 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
                             <button onClick={onEdit} className="p-2 bg-black/50 hover:bg-primary text-white rounded-lg backdrop-blur-md transition-colors"><Edit size={14}/></button>
-                            <button onClick={() => onDelete && onDelete(member.id)} className="p-2 bg-black/50 hover:bg-red-500 text-white rounded-lg backdrop-blur-md transition-colors"><Trash2 size={14}/></button>
+                            <button className="p-2 bg-black/50 hover:bg-red-500 text-white rounded-lg backdrop-blur-md transition-colors"><Trash2 size={14}/></button>
                         </div>
                         <div className="flex items-center gap-4">
                             <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-white/10 group-hover:border-primary transition-colors shrink-0">
@@ -251,7 +254,7 @@ const HomeEditorView = () => {
     );
 };
 
-const GalleryView = ({ gallery = [], onDelete }: { gallery?: any[], onDelete?: (id: string) => void }) => (
+const GalleryView = () => (
     <div className="space-y-6 animate-fade-in">
         <div className="flex justify-between items-center">
             <div>
@@ -263,9 +266,9 @@ const GalleryView = ({ gallery = [], onDelete }: { gallery?: any[], onDelete?: (
             </button>
         </div>
 
-        {gallery.length > 0 ? (
+        {GALLERY.length > 0 ? (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {gallery.map((item) => (
+                {GALLERY.map((item) => (
                     <div 
                         key={item.id} 
                         className={`relative group rounded-xl overflow-hidden border border-white/10 ${item.cols === 2 ? 'col-span-2' : 'col-span-1'} ${item.rows === 2 ? 'row-span-2 aspect-[1/2]' : 'aspect-square'}`}
@@ -275,7 +278,7 @@ const GalleryView = ({ gallery = [], onDelete }: { gallery?: any[], onDelete?: (
                             <p className="text-white font-bold text-sm text-center px-2">{item.title}</p>
                             <div className="flex gap-2">
                                 <button className="p-1.5 bg-white text-black rounded hover:bg-primary transition-colors"><Edit size={14}/></button>
-                                <button onClick={() => onDelete && onDelete(item.id)} className="p-1.5 bg-red-500 text-white rounded hover:bg-red-600 transition-colors"><Trash2 size={14}/></button>
+                                <button className="p-1.5 bg-red-500 text-white rounded hover:bg-red-600 transition-colors"><Trash2 size={14}/></button>
                             </div>
                             <div className="mt-2 flex gap-1">
                                 <span className="text-[10px] bg-white/20 px-1.5 py-0.5 rounded text-white">
@@ -292,7 +295,7 @@ const GalleryView = ({ gallery = [], onDelete }: { gallery?: any[], onDelete?: (
     </div>
 );
 
-const SubscribersView = ({ subscribers = [] }: { subscribers?: any[] }) => (
+const SubscribersView = () => (
     <div className="bg-[#1a1f35]/60 backdrop-blur-xl rounded-2xl border border-white/10 overflow-hidden animate-fade-in">
         <div className="p-6 border-b border-white/10 flex justify-between items-center">
             <div>
@@ -304,42 +307,36 @@ const SubscribersView = ({ subscribers = [] }: { subscribers?: any[] }) => (
             </button>
         </div>
         <div className="overflow-x-auto">
-            {subscribers.length > 0 ? (
-                <table className="w-full text-left text-sm text-gray-400">
-                    <thead className="bg-white/5 text-gray-200 uppercase text-xs">
-                        <tr>
-                            <th className="px-6 py-4 font-semibold">Email</th>
-                            <th className="px-6 py-4 font-semibold">Fecha</th>
-                            <th className="px-6 py-4 font-semibold">Estado</th>
-                            <th className="px-6 py-4 font-semibold text-right">Acciones</th>
+            <table className="w-full text-left text-sm text-gray-400">
+                <thead className="bg-white/5 text-gray-200 uppercase text-xs">
+                    <tr>
+                        <th className="px-6 py-4 font-semibold">Email</th>
+                        <th className="px-6 py-4 font-semibold">Fecha</th>
+                        <th className="px-6 py-4 font-semibold">Estado</th>
+                        <th className="px-6 py-4 font-semibold text-right">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody className="divide-y divide-white/10">
+                    {[
+                        { email: 'padre.juan@gmail.com', date: '12 Mar 2025', status: 'Activo' },
+                        { email: 'maria.profesora@colegio.edu.pe', date: '11 Mar 2025', status: 'Activo' },
+                        { email: 'director.general@smartkids.edu', date: '01 Mar 2025', status: 'Verificado' },
+                    ].map((sub, i) => (
+                        <tr key={i} className="hover:bg-white/5 transition-colors">
+                            <td className="px-6 py-4 font-medium text-white">{sub.email}</td>
+                            <td className="px-6 py-4">{sub.date}</td>
+                            <td className="px-6 py-4">
+                                <span className="px-2 py-1 rounded bg-green-500/10 text-green-400 text-xs font-bold border border-green-500/20">
+                                    {sub.status}
+                                </span>
+                            </td>
+                            <td className="px-6 py-4 text-right">
+                                <button className="text-gray-500 hover:text-red-400 transition-colors"><Trash2 size={16}/></button>
+                            </td>
                         </tr>
-                    </thead>
-                    <tbody className="divide-y divide-white/10">
-                        {subscribers.map((sub: any) => (
-                            <tr key={sub.id} className="hover:bg-white/5 transition-colors">
-                                <td className="px-6 py-4 font-medium text-white">{sub.email}</td>
-                                <td className="px-6 py-4">
-                                  {sub.date ? (
-                                    typeof sub.date === 'string' ? sub.date : 
-                                    sub.date?.toDate ? new Date(sub.date.toDate()).toLocaleDateString('es-ES') :
-                                    'Sin fecha'
-                                  ) : 'Sin fecha'}
-                                </td>
-                                <td className="px-6 py-4">
-                                    <span className="px-2 py-1 rounded bg-green-500/10 text-green-400 text-xs font-bold border border-green-500/20">
-                                        Activo
-                                    </span>
-                                </td>
-                                <td className="px-6 py-4 text-right">
-                                    <button className="text-gray-500 hover:text-red-400 transition-colors"><Trash2 size={16}/></button>
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            ) : (
-                <EmptyState title="Sin suscriptores" description="Aún no hay usuarios registrados." />
-            )}
+                    ))}
+                </tbody>
+            </table>
         </div>
     </div>
 );
@@ -351,7 +348,21 @@ const Admin = () => {
   const { episodes: firebaseEpisodes, loading: loadingEpisodes } = useEpisodes();
   const { team: firebaseTeam } = useTeam();
   const { gallery: firebaseGallery } = useGallery();
-  const { subscribers: firebaseSubscribers } = useSubscribers();
+  const [subscribers, setSubscribers] = useState<any[]>([]);
+  
+  // Fetch Subscribers
+  useEffect(() => {
+    const fetchSubscribers = async () => {
+      try {
+        const querySnapshot = await getDocs(collection(db, "subscribers"));
+        const subs = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        setSubscribers(subs);
+      } catch (error) {
+        console.error("Error loading subscribers:", error);
+      }
+    };
+    fetchSubscribers();
+  }, []);
   
   // Map Firebase data
   const EPISODES = firebaseEpisodes || [];
@@ -365,116 +376,9 @@ const Admin = () => {
   const [isFeaturedToggle, setIsFeaturedToggle] = useState(false); // State for featured toggle in modal
   const navigate = useNavigate();
 
-  // Estados para el formulario de episodios
-  const [episodeForm, setEpisodeForm] = useState({
-    title: '',
-    author: '',
-    grade: '',
-    category: 'Cuentos' as Episode['category'],
-    description: '',
-    duration: '',
-    spotifyUrl: '',
-    imageUrl: '',
-    featured: false
-  });
-
-  const [editingEpisode, setEditingEpisode] = useState<string | null>(null);
-
   const handleLogout = () => {
     localStorage.removeItem('smart_auth_token');
     navigate('/login');
-  };
-
-  // Función para guardar nuevo episodio
-  const handleSaveEpisode = async () => {
-    // Validar campos obligatorios
-    if (!episodeForm.title || !episodeForm.author || !episodeForm.spotifyUrl) {
-      alert('Por favor completa los campos obligatorios: Título, Autor y URL de Spotify');
-      return;
-    }
-
-    setIsSaving(true);
-    try {
-      const episodeData = {
-        title: episodeForm.title,
-        author: episodeForm.author,
-        grade: episodeForm.grade || 'N/A',
-        category: episodeForm.category,
-        description: episodeForm.description || '',
-        duration: episodeForm.duration || '0 min',
-        spotifyUrl: episodeForm.spotifyUrl,
-        imageUrl: episodeForm.imageUrl || 'https://res.cloudinary.com/dkoshgzxo/image/upload/v1763685723/default_podcast.jpg',
-        featured: episodeForm.featured,
-        date: new Date().toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' })
-      };
-
-      let result;
-      if (editingEpisode) {
-        // EDITAR episodio existente
-        result = await updateEpisode(editingEpisode, episodeData);
-      } else {
-        // CREAR nuevo episodio
-        result = await createEpisode({
-          ...episodeData,
-          likes: 0,
-          plays: 0
-        });
-      }
-
-      if (result.success) {
-        // Limpiar formulario
-        setEpisodeForm({
-          title: '',
-          author: '',
-          grade: '',
-          category: 'Cuentos',
-          description: '',
-          duration: '',
-          spotifyUrl: '',
-          imageUrl: '',
-          featured: false
-        });
-        setEditingEpisode(null);
-        setIsEpisodeModalOpen(false);
-        alert(editingEpisode ? '✅ Episodio actualizado' : '✅ Episodio creado exitosamente');
-      } else {
-        alert('❌ Error al guardar episodio');
-      }
-    } catch (error) {
-      console.error('Error:', error);
-      alert('❌ Error al guardar');
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  // Función para abrir modal en modo edición
-  const handleEditEpisode = (episode: Episode) => {
-    setEpisodeForm({
-      title: episode.title,
-      author: episode.author,
-      grade: episode.grade,
-      category: episode.category,
-      description: episode.description,
-      duration: episode.duration,
-      spotifyUrl: episode.spotifyUrl,
-      imageUrl: episode.imageUrl,
-      featured: episode.featured || false
-    });
-    setEditingEpisode(episode.id);
-    setIsEpisodeModalOpen(true);
-  };
-
-  // Función para eliminar episodio
-  const handleDeleteEpisode = async (id: string, title: string) => {
-    if (!confirm(`¿Seguro que deseas eliminar "${title}"?`)) return;
-    
-    const result = await deleteEpisode(id);
-    if (result.success) {
-      alert('✅ Episodio eliminado');
-    } else {
-      alert('❌ Error al eliminar');
-    }
   };
 
   // Simulating backend save delay
@@ -487,55 +391,16 @@ const Admin = () => {
   };
 
   const renderContent = () => {
-    switch(activeTab) {
-        case 'dashboard': return <DashboardView />;
-        case 'episodes': return (
-  <EpisodesView 
-    episodes={firebaseEpisodes} 
-    onNew={() => {
-      setEditingEpisode(null);
-      setEpisodeForm({
-        title: '',
-        author: '',
-        grade: '',
-        category: 'Cuentos',
-        description: '',
-        duration: '',
-        spotifyUrl: '',
-        imageUrl: '',
-        featured: false
-      });
-      setIsEpisodeModalOpen(true);
-    }} 
-    onEdit={handleEditEpisode} 
-    onDelete={(id) => {
-      const episode = firebaseEpisodes.find(ep => ep.id === id);
-      if (episode) handleDeleteEpisode(id, episode.title);
-    }} 
-  />
-);
-        case 'teachers': return (
-          <TeachersView 
-            team={firebaseTeam}
-            onEdit={() => setIsTeacherModalOpen(true)}
-            onDelete={async (id) => {
-              if(confirm('¿Eliminar miembro?')) await deleteTeamMember(id);
-            }}
-          />
-        );
-        case 'home_editor': return <HomeEditorView />;
-        case 'gallery': return (
-          <GalleryView 
-            gallery={firebaseGallery}
-            onDelete={async (id) => {
-              if(confirm('¿Eliminar foto?')) await deleteGalleryItem(id);
-            }}
-          />
-        );
-        case 'subscribers': return <SubscribersView subscribers={firebaseSubscribers} />;
-        default: return <DashboardView />;
-    }
-};
+      switch(activeTab) {
+          case 'dashboard': return <DashboardView episodes={EPISODES} team={TEAM} subscribers={subscribers} />;
+          case 'episodes': return <EpisodesView onNew={() => setIsEpisodeModalOpen(true)} />;
+          case 'teachers': return <TeachersView onEdit={() => setIsTeacherModalOpen(true)} />;
+          case 'home_editor': return <HomeEditorView />;
+          case 'gallery': return <GalleryView />;
+          case 'subscribers': return <SubscribersView />;
+          default: return <DashboardView />;
+      }
+  };
 
   const getTitle = () => {
       switch(activeTab) {
@@ -644,10 +509,8 @@ const Admin = () => {
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
                 <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => !isSaving && setIsEpisodeModalOpen(false)}></div>
                 <div className="relative bg-[#1a1f35] border border-white/10 rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden animate-scale-in max-h-[90vh] overflow-y-auto">
-                    <div className="p-6 border-b border-white/10 flex justify-between items-center bg-[#0a0f1e] sticky top-0 z-10">
-                        <h3 className="text-xl font-display font-bold text-white">
-                          {editingEpisode ? 'Editar Episodio' : 'Nuevo Episodio'}
-                        </h3>
+                    <div className="p-6 border-b border-white/10 flex justify-between items-center bg-[#0a0f1e]">
+                        <h3 className="text-xl font-display font-bold text-white">Nuevo Episodio</h3>
                         <button onClick={() => setIsEpisodeModalOpen(false)} disabled={isSaving} className="text-gray-400 hover:text-white transition-colors disabled:opacity-50"><X size={24}/></button>
                     </div>
                     
@@ -662,99 +525,20 @@ const Admin = () => {
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="space-y-2">
-                                <label className="text-xs font-bold text-gray-400 uppercase">Título *</label>
-                                <input 
-                                  type="text" 
-                                  value={episodeForm.title}
-                                  onChange={(e) => setEpisodeForm({...episodeForm, title: e.target.value})}
-                                  className="w-full bg-[#0a0f1e] border border-white/10 rounded-xl px-4 py-3 text-white focus:border-primary outline-none" 
-                                  placeholder="El Zorro y el Cóndor"
-                                />
+                                <label className="text-xs font-bold text-gray-400 uppercase">Título</label>
+                                <input type="text" className="w-full bg-[#0a0f1e] border border-white/10 rounded-xl px-4 py-3 text-white focus:border-primary outline-none" />
                             </div>
-                            <div className="space-y-2">
-                                <label className="text-xs font-bold text-gray-400 uppercase">Autor / Grado *</label>
-                                <input 
-                                  type="text" 
-                                  value={episodeForm.author}
-                                  onChange={(e) => setEpisodeForm({...episodeForm, author: e.target.value})}
-                                  className="w-full bg-[#0a0f1e] border border-white/10 rounded-xl px-4 py-3 text-white focus:border-primary outline-none" 
-                                  placeholder="Lucas Quispe"
-                                />
-                            </div>
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div className="space-y-2">
-                                <label className="text-xs font-bold text-gray-400 uppercase">Grado</label>
-                                <input 
-                                  type="text" 
-                                  value={episodeForm.grade}
-                                  onChange={(e) => setEpisodeForm({...episodeForm, grade: e.target.value})}
-                                  className="w-full bg-[#0a0f1e] border border-white/10 rounded-xl px-4 py-3 text-white focus:border-primary outline-none" 
-                                  placeholder="4° Grado"
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-xs font-bold text-gray-400 uppercase">Categoría</label>
-                                <select 
-                                  value={episodeForm.category}
-                                  onChange={(e) => setEpisodeForm({...episodeForm, category: e.target.value as Episode['category']})}
-                                  className="w-full bg-[#0a0f1e] border border-white/10 rounded-xl px-4 py-3 text-white focus:border-primary outline-none"
-                                >
-                                  <option value="Cuentos">Cuentos</option>
-                                  <option value="Ciencia">Ciencia</option>
-                                  <option value="Historia">Historia</option>
-                                  <option value="Entrevistas">Entrevistas</option>
-                                  <option value="Debate">Debate</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <div className="space-y-2">
-                            <label className="text-xs font-bold text-gray-400 uppercase">Descripción</label>
-                            <textarea 
-                              rows={3} 
-                              value={episodeForm.description}
-                              onChange={(e) => setEpisodeForm({...episodeForm, description: e.target.value})}
-                              className="w-full bg-[#0a0f1e] border border-white/10 rounded-xl px-4 py-3 text-white focus:border-primary outline-none" 
-                              placeholder="Un cuento tradicional andino..."
-                            />
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div className="space-y-2">
-                                <label className="text-xs font-bold text-gray-400 uppercase">Duración</label>
-                                <input 
-                                  type="text" 
-                                  value={episodeForm.duration}
-                                  onChange={(e) => setEpisodeForm({...episodeForm, duration: e.target.value})}
-                                  className="w-full bg-[#0a0f1e] border border-white/10 rounded-xl px-4 py-3 text-white focus:border-primary outline-none" 
-                                  placeholder="10 min"
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-xs font-bold text-gray-400 uppercase">URL de Imagen</label>
-                                <input 
-                                  type="url" 
-                                  value={episodeForm.imageUrl}
-                                  onChange={(e) => setEpisodeForm({...episodeForm, imageUrl: e.target.value})}
-                                  className="w-full bg-[#0a0f1e] border border-white/10 rounded-xl px-4 py-3 text-white focus:border-primary outline-none" 
-                                  placeholder="https://..."
-                                />
+                             <div className="space-y-2">
+                                <label className="text-xs font-bold text-gray-400 uppercase">Autor / Grado</label>
+                                <input type="text" className="w-full bg-[#0a0f1e] border border-white/10 rounded-xl px-4 py-3 text-white focus:border-primary outline-none" />
                             </div>
                         </div>
 
                         <div className="space-y-2">
                              <label className="text-xs font-bold text-green-400 uppercase flex items-center gap-2">
-                                <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div> Enlace Spotify *
+                                <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div> Enlace Spotify
                              </label>
-                             <input 
-                               type="url" 
-                               value={episodeForm.spotifyUrl}
-                               onChange={(e) => setEpisodeForm({...episodeForm, spotifyUrl: e.target.value})}
-                               placeholder="https://open.spotify.com/episode/..." 
-                               className="w-full bg-[#0a0f1e] border border-green-500/30 rounded-xl px-4 py-3 text-white focus:border-green-500 outline-none" 
-                             />
+                             <input type="url" placeholder="https://open.spotify.com/episode/..." className="w-full bg-[#0a0f1e] border border-green-500/30 rounded-xl px-4 py-3 text-white focus:border-green-500 outline-none" />
                         </div>
 
                         {/* Featured Toggle */}
@@ -764,18 +548,18 @@ const Admin = () => {
                                 <p className="text-xs text-gray-400">Aparecerá en la sección "Podcasts Destacados" del Home.</p>
                             </div>
                             <button 
-                                onClick={() => setEpisodeForm({...episodeForm, featured: !episodeForm.featured})}
-                                className={`w-12 h-7 rounded-full p-1 transition-colors ${episodeForm.featured ? 'bg-primary' : 'bg-gray-700'}`}
+                                onClick={() => setIsFeaturedToggle(!isFeaturedToggle)}
+                                className={`w-12 h-7 rounded-full p-1 transition-colors ${isFeaturedToggle ? 'bg-primary' : 'bg-gray-700'}`}
                             >
-                                <div className={`w-5 h-5 rounded-full bg-white shadow-sm transition-transform ${episodeForm.featured ? 'translate-x-5' : 'translate-x-0'}`} />
+                                <div className={`w-5 h-5 rounded-full bg-white shadow-sm transition-transform ${isFeaturedToggle ? 'translate-x-5' : 'translate-x-0'}`} />
                             </button>
                         </div>
                     </div>
 
-                    <div className="p-6 border-t border-white/10 flex justify-end gap-4 bg-[#0a0f1e] sticky bottom-0">
+                    <div className="p-6 border-t border-white/10 flex justify-end gap-4 bg-[#0a0f1e]">
                         <button onClick={() => setIsEpisodeModalOpen(false)} disabled={isSaving} className="px-6 py-2.5 rounded-xl text-gray-400 hover:text-white font-medium transition-colors disabled:opacity-50">Cancelar</button>
                         <button 
-                            onClick={handleSaveEpisode} 
+                            onClick={() => handleModalSave(() => setIsEpisodeModalOpen(false))} 
                             disabled={isSaving}
                             className="px-6 py-2.5 rounded-xl bg-primary hover:bg-primary-dark text-white font-bold shadow-lg flex items-center gap-2 disabled:opacity-80 disabled:cursor-not-allowed"
                         >

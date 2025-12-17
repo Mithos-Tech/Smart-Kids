@@ -1,120 +1,81 @@
-// firebase/hooks.ts
 import { useState, useEffect } from 'react';
-import { collection, getDocs, query, where } from 'firebase/firestore';
+import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
 import { db } from './config';
-import { Episode, TeamMember, GalleryItem } from '../types';
+import type { Episode, TeamMember, GalleryItem } from '../types';
 
-// Hook para obtener episodios
 export const useEpisodes = () => {
   const [episodes, setEpisodes] = useState<Episode[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchEpisodes = async () => {
-      try {
-        const episodesCol = collection(db, 'episodes');
-        const episodesSnapshot = await getDocs(episodesCol);
-        const episodesList = episodesSnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        })) as Episode[];
-        setEpisodes(episodesList);
-        setError(null);
-      } catch (err) {
-        setError('Error al cargar episodios');
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchEpisodes();
-  }, []);
-
-  return { episodes, loading, error };
-};
-
-// Hook para obtener episodios destacados
-export const useFeaturedEpisodes = () => {
-  const [episodes, setEpisodes] = useState<Episode[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchFeatured = async () => {
-      try {
-        const q = query(collection(db, 'episodes'), where('featured', '==', true));
-        const snapshot = await getDocs(q);
-        const episodesList = snapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        })) as Episode[];
-        setEpisodes(episodesList);
-      } catch (err) {
-        console.error('Error al cargar destacados:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchFeatured();
+    const q = query(collection(db, 'episodes'), orderBy('date', 'desc'));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Episode[];
+      setEpisodes(data);
+      setLoading(false);
+    });
+    return () => unsubscribe();
   }, []);
 
   return { episodes, loading };
 };
 
-// Hook para obtener equipo
 export const useTeam = () => {
   const [team, setTeam] = useState<TeamMember[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchTeam = async () => {
-      try {
-        const teamCol = collection(db, 'team');
-        const teamSnapshot = await getDocs(teamCol);
-        const teamList = teamSnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        })) as TeamMember[];
-        setTeam(teamList);
-      } catch (err) {
-        console.error('Error al cargar equipo:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchTeam();
+    const unsubscribe = onSnapshot(collection(db, 'team'), (snapshot) => {
+      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as TeamMember[];
+      setTeam(data);
+      setLoading(false);
+    });
+    return () => unsubscribe();
   }, []);
 
   return { team, loading };
 };
 
-// Hook para obtener galería
 export const useGallery = () => {
   const [gallery, setGallery] = useState<GalleryItem[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchGallery = async () => {
-      try {
-        const galleryCol = collection(db, 'gallery');
-        const gallerySnapshot = await getDocs(galleryCol);
-        const galleryList = gallerySnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        })) as GalleryItem[];
-        setGallery(galleryList);
-      } catch (err) {
-        console.error('Error al cargar galería:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchGallery();
+    const unsubscribe = onSnapshot(collection(db, 'gallery'), (snapshot) => {
+      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as GalleryItem[];
+      setGallery(data);
+      setLoading(false);
+    });
+    return () => unsubscribe();
   }, []);
 
   return { gallery, loading };
+};
+
+export const useSubscribers = () => {
+  const [subscribers, setSubscribers] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const q = query(collection(db, 'subscribers'), orderBy('date', 'desc'));
+    
+    const unsubscribe = onSnapshot(q,
+      (snapshot) => {
+        const data = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
+        setSubscribers(data);
+        setLoading(false);
+      },
+      (err) => {
+        console.error('Error fetching subscribers:', err);
+        setLoading(false);
+      }
+    );
+
+    return () => unsubscribe();
+  }, []);
+
+  return { subscribers, loading };
 };
