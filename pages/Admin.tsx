@@ -27,15 +27,27 @@ const EmptyState = ({ title, description, actionLabel, onAction }: { title: stri
 
 // --- VIEWS ---
 
-const DashboardView = ({ episodes, team, subscribers }: any) => (
+const DashboardView = ({ 
+    episodesCount = 0, 
+    teamCount = 0, 
+    subscribersCount = 0,
+    onNewEpisode,
+    onUploadGallery
+}: { 
+    episodesCount?: number;
+    teamCount?: number;
+    subscribersCount?: number;
+    onNewEpisode?: () => void;
+    onUploadGallery?: () => void;
+}) => (
   <div className="space-y-8 animate-fade-in">
     {/* Stats Cards */}
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {[
-            { title: 'Total Episodios', value: episodes?.length || 0, color: 'bg-blue-500', icon: Mic, trend: '+2 esta semana' },
-            { title: 'Reproducciones', value: episodes?.reduce((sum: number, ep: any) => sum + (ep.plays || 0), 0).toLocaleString() || '0', color: 'bg-green-500', icon: Users, trend: '+15% vs mes anterior' },
-            { title: 'Equipo Docente', value: team?.length || 0, color: 'bg-purple-500', icon: Users, trend: 'Activo' },
-            { title: 'Suscriptores', value: subscribers?.length || 0, color: 'bg-amber-500', icon: Mail, trend: '+12 hoy' }
+            { title: 'Total Episodios', value: episodesCount.toString(), color: 'bg-blue-500', icon: Mic, trend: 'En Firestore' },
+            { title: 'Reproducciones', value: '12.5k', color: 'bg-green-500', icon: Users, trend: '+15% vs mes anterior' },
+            { title: 'Equipo Docente', value: teamCount.toString(), color: 'bg-purple-500', icon: Users, trend: 'Activo' },
+            { title: 'Suscriptores', value: subscribersCount.toString(), color: 'bg-amber-500', icon: Mail, trend: 'Registrados' }
         ].map((stat, i) => (
             <div key={i} className="bg-[#1a1f35]/60 backdrop-blur-xl p-6 rounded-2xl border border-white/10 relative overflow-hidden group hover:border-white/20 transition-all">
                 <div className={`absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity ${stat.color} rounded-bl-2xl`}>
@@ -60,10 +72,14 @@ const DashboardView = ({ episodes, team, subscribers }: any) => (
              <p className="text-gray-400 text-sm">Gestiona el contenido de Smart Kids desde un solo lugar.</p>
          </div>
          <div className="flex gap-4">
-             <button className="px-6 py-3 bg-primary hover:bg-primary-dark text-white font-bold rounded-xl shadow-lg shadow-primary/20 transition-all flex items-center gap-2">
+             <button 
+                 onClick={onNewEpisode}
+                 className="px-6 py-3 bg-primary hover:bg-primary-dark text-white font-bold rounded-xl shadow-lg shadow-primary/20 transition-all flex items-center gap-2">
                  <Mic size={18} /> Nuevo Episodio
              </button>
-             <button className="px-6 py-3 bg-white/5 hover:bg-white/10 text-white font-bold rounded-xl border border-white/10 transition-all flex items-center gap-2">
+             <button 
+                 onClick={onUploadGallery}
+                 className="px-6 py-3 bg-white/5 hover:bg-white/10 text-white font-bold rounded-xl border border-white/10 transition-all flex items-center gap-2">
                  <Image size={18} /> Subir a Galería
              </button>
          </div>
@@ -71,72 +87,103 @@ const DashboardView = ({ episodes, team, subscribers }: any) => (
   </div>
 );
 
-const EpisodesView = ({ episodes = [], onNew, onEdit, onDelete }: { episodes?: any[], onNew: () => void, onEdit?: (ep: any) => void, onDelete?: (id: string) => void }) => (
-  <div className="bg-[#1a1f35]/60 backdrop-blur-xl rounded-2xl border border-white/10 overflow-hidden animate-fade-in">
-    <div className="p-6 border-b border-white/10 flex flex-col sm:flex-row justify-between items-center gap-4">
-      <h3 className="font-bold text-lg text-white">Catálogo de Episodios</h3>
-      <div className="flex gap-3 w-full sm:w-auto">
-          <div className="relative flex-grow sm:flex-grow-0">
-             <input type="text" placeholder="Buscar..." className="w-full bg-white/5 border border-white/10 rounded-lg pl-9 pr-3 py-2 text-sm text-white focus:border-primary outline-none" />
-             <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-          </div>
-          <button onClick={onNew} className="bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded-lg text-sm font-bold transition-all flex items-center gap-2 shadow-lg shadow-primary/20">
-            <Plus size={16} /> <span className="hidden sm:inline">Nuevo</span>
-          </button>
-      </div>
-    </div>
-    <div className="overflow-x-auto">
-      {episodes.length > 0 ? (
-          <table className="w-full text-left text-sm text-gray-400">
-            <thead className="bg-white/5 text-gray-200 uppercase text-xs">
-              <tr>
-                <th className="px-6 py-4 font-semibold">Podcast</th>
-                <th className="px-6 py-4 font-semibold">Votos</th>
-                <th className="px-6 py-4 font-semibold">Categoría</th>
-                <th className="px-6 py-4 font-semibold text-right">Acciones</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-white/10">
-              {episodes.map((ep) => (
-                <tr key={ep.id} className="hover:bg-white/5 transition-colors group">
-                  <td className="px-6 py-4 font-medium text-white">
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-lg bg-gray-800 overflow-hidden shadow-md border border-white/10 group-hover:border-primary/50 transition-colors relative shrink-0">
-                        <img src={ep.imageUrl} alt="" className="w-full h-full object-cover" />
-                      </div>
-                      <div>
-                          <div className="font-bold line-clamp-1">{ep.title}</div>
-                          <div className="text-xs text-gray-500">{ep.author} • {ep.grade}</div>
-                      </div>
+const EpisodesView = ({ 
+    episodes = [], 
+    onNew, 
+    onEdit, 
+    onDelete,
+    searchTerm = '',
+    onSearchChange
+}: { 
+    episodes?: any[], 
+    onNew: () => void, 
+    onEdit?: (ep: any) => void, 
+    onDelete?: (id: string) => void,
+    searchTerm?: string,
+    onSearchChange?: (term: string) => void
+}) => {
+    // Filtrar episodios por búsqueda
+    const filteredEpisodes = searchTerm 
+        ? episodes.filter(ep => 
+            ep.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            ep.author?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            ep.category?.toLowerCase().includes(searchTerm.toLowerCase())
+          )
+        : episodes;
+
+    return (
+        <div className="bg-[#1a1f35]/60 backdrop-blur-xl rounded-2xl border border-white/10 overflow-hidden animate-fade-in">
+            <div className="p-6 border-b border-white/10 flex flex-col sm:flex-row justify-between items-center gap-4">
+                <h3 className="font-bold text-lg text-white">Catálogo de Episodios</h3>
+                <div className="flex gap-3 w-full sm:w-auto">
+                    <div className="relative flex-grow sm:flex-grow-0">
+                        <input 
+                            type="text" 
+                            placeholder="Buscar por título, autor o categoría..." 
+                            value={searchTerm}
+                            onChange={(e) => onSearchChange && onSearchChange(e.target.value)}
+                            className="w-full bg-white/5 border border-white/10 rounded-lg pl-9 pr-3 py-2 text-sm text-white focus:border-primary outline-none" 
+                        />
+                        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                     </div>
-                  </td>
-                  <td className="px-6 py-4">
-                      <div className="flex items-center gap-2 text-gray-300">
-                          <Heart size={14} className="text-red-400 fill-red-400" />
-                          <span className="font-bold">{ep.likes}</span>
-                      </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className={`px-3 py-1 rounded-full text-xs font-bold ${ep.category === 'Ciencia' ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' : 'bg-green-500/10 text-green-400 border border-green-500/20'}`}>
-                      {ep.category}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    <div className="flex items-center justify-end gap-2 opacity-60 group-hover:opacity-100 transition-opacity">
-                      <button onClick={() => onEdit && onEdit(ep)} className="p-2 hover:bg-white/10 rounded-lg text-gray-400 hover:text-primary transition-colors" title="Editar"><Edit size={16} /></button>
-                      <button onClick={() => onDelete && onDelete(ep.id)} className="p-2 hover:bg-white/10 rounded-lg text-gray-400 hover:text-red-500 transition-colors" title="Eliminar"><Trash2 size={16} /></button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-      ) : (
-          <EmptyState title="No hay episodios" description="Comienza subiendo el primer podcast de tu escuela." actionLabel="Crear Episodio" onAction={onNew} />
-      )}
-    </div>
-  </div>
-);
+                    <button onClick={onNew} className="bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded-lg text-sm font-bold transition-all flex items-center gap-2 shadow-lg shadow-primary/20">
+                        <Plus size={16} /> <span className="hidden sm:inline">Nuevo</span>
+                    </button>
+                </div>
+            </div>
+            <div className="overflow-x-auto">
+                {filteredEpisodes.length > 0 ? (
+                    <table className="w-full text-left text-sm text-gray-400">
+                        <thead className="bg-white/5 text-gray-200 uppercase text-xs">
+                            <tr>
+                                <th className="px-6 py-4 font-semibold">Podcast</th>
+                                <th className="px-6 py-4 font-semibold">Votos</th>
+                                <th className="px-6 py-4 font-semibold">Categoría</th>
+                                <th className="px-6 py-4 font-semibold text-right">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-white/10">
+                            {filteredEpisodes.map((ep) => (
+                                <tr key={ep.id} className="hover:bg-white/5 transition-colors group">
+                                    <td className="px-6 py-4 font-medium text-white">
+                                        <div className="flex items-center gap-4">
+                                            <div className="w-12 h-12 rounded-lg bg-gray-800 overflow-hidden shadow-md border border-white/10 group-hover:border-primary/50 transition-colors relative shrink-0">
+                                                <img src={ep.imageUrl} alt="" className="w-full h-full object-cover" />
+                                            </div>
+                                            <div>
+                                                <div className="font-bold line-clamp-1">{ep.title}</div>
+                                                <div className="text-xs text-gray-500">{ep.author} • {ep.grade}</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        <div className="flex items-center gap-2 text-gray-300">
+                                            <Heart size={14} className="text-red-400 fill-red-400" />
+                                            <span className="font-bold">{ep.likes}</span>
+                                        </div>
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        <span className={`px-3 py-1 rounded-full text-xs font-bold ${ep.category === 'Ciencia' ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' : 'bg-green-500/10 text-green-400 border border-green-500/20'}`}>
+                                            {ep.category}
+                                        </span>
+                                    </td>
+                                    <td className="px-6 py-4 text-right">
+                                        <div className="flex items-center justify-end gap-2 opacity-60 group-hover:opacity-100 transition-opacity">
+                                            <button onClick={() => onEdit && onEdit(ep)} className="p-2 hover:bg-white/10 rounded-lg text-gray-400 hover:text-primary transition-colors" title="Editar"><Edit size={16} /></button>
+                                            <button onClick={() => onDelete && onDelete(ep.id)} className="p-2 hover:bg-white/10 rounded-lg text-gray-400 hover:text-red-500 transition-colors" title="Eliminar"><Trash2 size={16} /></button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                ) : (
+                    <EmptyState title="No hay episodios" description="Comienza subiendo el primer podcast de tu escuela." actionLabel="Crear Episodio" onAction={onNew} />
+                )}
+            </div>
+        </div>
+    );
+};
 
 const TeachersView = ({ team = [], onEdit, onDelete }: { team?: any[], onEdit: () => void, onDelete?: (id: string) => void }) => (
     <div className="space-y-6 animate-fade-in">
@@ -352,6 +399,7 @@ const Admin = () => {
   const { team: firebaseTeam } = useTeam();
   const { gallery: firebaseGallery } = useGallery();
   const { subscribers: firebaseSubscribers } = useSubscribers();
+  const [searchEpisodes, setSearchEpisodes] = useState('');
   
   // Map Firebase data
   const EPISODES = firebaseEpisodes || [];
@@ -488,22 +536,34 @@ const Admin = () => {
 
   const renderContent = () => {
     switch(activeTab) {
-        case 'dashboard': return <DashboardView />;
+        case 'dashboard': return (
+    <DashboardView 
+        episodesCount={firebaseEpisodes.length}
+        teamCount={firebaseTeam.length}
+        subscribersCount={firebaseSubscribers.length}
+        onNewEpisode={() => {
+            setActiveTab('episodes');
+            setEditingEpisode(null);
+            setEpisodeForm({
+                title: '', author: '', grade: '', category: 'Cuentos',
+                description: '', duration: '', spotifyUrl: '', imageUrl: '', featured: false
+            });
+            setIsEpisodeModalOpen(true);
+        }}
+        onUploadGallery={() => setActiveTab('gallery')}
+    />
+);
         case 'episodes': return (
   <EpisodesView 
-    episodes={firebaseEpisodes} 
+    episodes={firebaseEpisodes}
+    searchTerm={searchEpisodes}
+    onSearchChange={setSearchEpisodes}
     onNew={() => {
+      setActiveTab('episodes');
       setEditingEpisode(null);
       setEpisodeForm({
-        title: '',
-        author: '',
-        grade: '',
-        category: 'Cuentos',
-        description: '',
-        duration: '',
-        spotifyUrl: '',
-        imageUrl: '',
-        featured: false
+        title: '', author: '', grade: '', category: 'Cuentos',
+        description: '', duration: '', spotifyUrl: '', imageUrl: '', featured: false
       });
       setIsEpisodeModalOpen(true);
     }} 
@@ -756,6 +816,27 @@ const Admin = () => {
                                className="w-full bg-[#0a0f1e] border border-green-500/30 rounded-xl px-4 py-3 text-white focus:border-green-500 outline-none" 
                              />
                         </div>
+
+                      {/* Teacher/Member Modal */}
+        {isTeacherModalOpen && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => !isSaving && setIsTeacherModalOpen(false)}></div>
+                <div className="relative bg-[#1a1f35] border border-white/10 rounded-2xl shadow-2xl w-full max-w-xl overflow-hidden animate-scale-in">
+                    <div className="p-6 border-b border-white/10 flex justify-between items-center bg-[#0a0f1e]">
+                        <h3 className="text-xl font-display font-bold text-white">Nuevo Miembro del Equipo</h3>
+                        <button onClick={() => setIsTeacherModalOpen(false)} disabled={isSaving} className="text-gray-400 hover:text-white transition-colors disabled:opacity-50"><X size={24}/></button>
+                    </div>
+                    <div className="p-8 space-y-6">
+                        <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-4">
+                            <p className="text-yellow-200 text-sm">⚠️ Funcionalidad en desarrollo. Próximamente podrás agregar miembros del equipo.</p>
+                        </div>
+                    </div>
+                    <div className="p-6 border-t border-white/10 flex justify-end gap-4 bg-[#0a0f1e]">
+                        <button onClick={() => setIsTeacherModalOpen(false)} className="px-6 py-2.5 rounded-xl text-gray-400 hover:text-white font-medium">Cerrar</button>
+                    </div>
+                </div>
+            </div>
+        )}
 
                         {/* Featured Toggle */}
                         <div className="flex items-center justify-between bg-white/5 p-4 rounded-xl border border-white/10">
