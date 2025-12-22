@@ -78,3 +78,14 @@ export const deleteGalleryItem = async (id: string) => {
     return { success: false, error };
   }
 };
+
+export const updateGalleryItem = async (id: string, data: Partial<any>) => {
+  try {
+    const docRef = doc(db, 'gallery', id);
+    await updateDoc(docRef, data);
+    return { success: true };
+  } catch (error) {
+    console.error('Error updating gallery item:', error);
+    return { success: false, error };
+  }
+};

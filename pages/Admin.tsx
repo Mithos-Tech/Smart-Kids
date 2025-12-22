@@ -185,14 +185,14 @@ const EpisodesView = ({
     );
 };
 
-const TeachersView = ({ team = [], onEdit, onDelete }: { team?: any[], onEdit: () => void, onDelete?: (id: string) => void }) => (
+const TeachersView = ({ team = [], onNew, onEdit, onDelete }: { team?: any[], onNew?: () => void, onEdit?: (teacher: any) => void, onDelete?: (id: string) => void }) => (
     <div className="space-y-6 animate-fade-in">
         <div className="flex justify-between items-center">
             <div>
                 <h3 className="text-xl font-bold text-white">Equipo Fundador</h3>
                 <p className="text-sm text-gray-400">Gestiona los perfiles de la página "Nosotros"</p>
             </div>
-            <button onClick={onEdit} className="bg-white/5 hover:bg-white/10 text-white border border-white/10 px-4 py-2 rounded-lg text-sm font-bold transition-all flex items-center gap-2">
+            <button onClick={onNew} className="bg-white/5 hover:bg-white/10 text-white border border-white/10 px-4 py-2 rounded-lg text-sm font-bold transition-all flex items-center gap-2">
                 <Plus size={16} /> Agregar Miembro
             </button>
         </div>
@@ -202,7 +202,7 @@ const TeachersView = ({ team = [], onEdit, onDelete }: { team?: any[], onEdit: (
                 {team.map((member) => (
                     <div key={member.id} className="bg-[#1a1f35]/60 backdrop-blur-xl border border-white/10 rounded-2xl p-6 flex flex-col gap-4 group hover:border-primary/30 transition-all relative overflow-hidden">
                         <div className="absolute top-0 right-0 p-4 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
-                            <button onClick={onEdit} className="p-2 bg-black/50 hover:bg-primary text-white rounded-lg backdrop-blur-md transition-colors"><Edit size={14}/></button>
+                            <button onClick={() => onEdit && onEdit(member)} className="p-2 bg-black/50 hover:bg-primary text-white rounded-lg backdrop-blur-md transition-colors"><Edit size={14}/></button>
                             <button onClick={() => onDelete && onDelete(member.id)} className="p-2 bg-black/50 hover:bg-red-500 text-white rounded-lg backdrop-blur-md transition-colors"><Trash2 size={14}/></button>
                         </div>
                         <div className="flex items-center gap-4">
@@ -298,15 +298,25 @@ const HomeEditorView = () => {
     );
 };
 
-const GalleryView = ({ gallery = [], onDelete }: { gallery?: any[], onDelete?: (id: string) => void }) => (
+const GalleryView = ({ 
+    gallery = [], 
+    onNew, 
+    onEdit, 
+    onDelete 
+}: { 
+    gallery?: any[], 
+    onNew?: () => void, 
+    onEdit?: (item: any) => void, 
+    onDelete?: (id: string) => void 
+}) => (
     <div className="space-y-6 animate-fade-in">
         <div className="flex justify-between items-center">
             <div>
                 <h3 className="text-xl font-bold text-white">Galería "Nosotros"</h3>
                 <p className="text-sm text-gray-400">Gestiona el mosaico de fotos (Bento Grid)</p>
             </div>
-            <button className="bg-white/5 hover:bg-white/10 text-white border border-white/10 px-4 py-2 rounded-lg text-sm font-bold transition-all flex items-center gap-2">
-                <Upload size={16} /> Subir Foto
+            <button onClick={onNew} className="bg-white/5 hover:bg-white/10 text-white border border-white/10 px-4 py-2 rounded-lg text-sm font-bold transition-all flex items-center gap-2">
+              <Upload size={16} /> Subir Foto
             </button>
         </div>
 
@@ -321,7 +331,7 @@ const GalleryView = ({ gallery = [], onDelete }: { gallery?: any[], onDelete?: (
                         <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2">
                             <p className="text-white font-bold text-sm text-center px-2">{item.title}</p>
                             <div className="flex gap-2">
-                                <button className="p-1.5 bg-white text-black rounded hover:bg-primary transition-colors"><Edit size={14}/></button>
+                                <button onClick={() => onEdit && onEdit(item)} className="p-1.5 bg-white text-black rounded hover:bg-primary transition-colors"><Edit size={14}/></button>
                                 <button onClick={() => onDelete && onDelete(item.id)} className="p-1.5 bg-red-500 text-white rounded hover:bg-red-600 transition-colors"><Trash2 size={14}/></button>
                             </div>
                             <div className="mt-2 flex gap-1">
@@ -428,6 +438,26 @@ const Admin = () => {
 
   const [editingEpisode, setEditingEpisode] = useState<string | null>(null);
 
+  // Estados para el formulario de docentes
+  const [teacherForm, setTeacherForm] = useState({
+    name: '',
+    role: '',
+    area: '',
+    quote: '',
+    imageUrl: ''
+  });
+  const [editingTeacher, setEditingTeacher] = useState<string | null>(null);
+
+  // Estados para el formulario de galería
+  const [galleryForm, setGalleryForm] = useState({
+    title: '',
+    imageUrl: '',
+    cols: 1,
+    rows: 1
+  });
+  const [editingGalleryItem, setEditingGalleryItem] = useState<string | null>(null);
+  const [isGalleryModalOpen, setIsGalleryModalOpen] = useState(false);
+
   const handleLogout = () => {
     localStorage.removeItem('smart_auth_token');
     navigate('/login');
@@ -525,6 +555,153 @@ const Admin = () => {
     }
   };
 
+  // Función para guardar o editar docente
+  const handleSaveTeacher = async () => {
+    // Validar campos obligatorios
+    if (!teacherForm.name || !teacherForm.role) {
+      alert('Por favor completa los campos obligatorios: Nombre y Rol');
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const teacherData = {
+        name: teacherForm.name,
+        role: teacherForm.role,
+        area: teacherForm.area || 'General',
+        quote: teacherForm.quote || '',
+        imageUrl: teacherForm.imageUrl || 'https://res.cloudinary.com/dkoshgzxo/image/upload/v1763692249/default_avatar.jpg'
+      };
+
+      let result;
+      if (editingTeacher) {
+        // EDITAR docente existente
+        result = await updateTeamMember(editingTeacher, teacherData);
+      } else {
+        // CREAR nuevo docente
+        result = await createTeamMember(teacherData);
+      }
+
+      if (result.success) {
+        // Limpiar formulario
+        setTeacherForm({
+          name: '',
+          role: '',
+          area: '',
+          quote: '',
+          imageUrl: ''
+        });
+        setEditingTeacher(null);
+        setIsTeacherModalOpen(false);
+        alert(editingTeacher ? '✅ Docente actualizado' : '✅ Docente agregado exitosamente');
+      } else {
+        alert('❌ Error al guardar docente');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      alert('❌ Error al guardar');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // Función para guardar o editar item de galería
+  const handleSaveGalleryItem = async () => {
+    // Validar campos obligatorios
+    if (!galleryForm.title || !galleryForm.imageUrl) {
+      alert('Por favor completa los campos obligatorios: Título e Imagen');
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const galleryData = {
+        title: galleryForm.title,
+        imageUrl: galleryForm.imageUrl,
+        cols: galleryForm.cols,
+        rows: galleryForm.rows
+      };
+
+      let result;
+      if (editingGalleryItem) {
+        // EDITAR item existente
+        result = await updateGalleryItem(editingGalleryItem, galleryData);
+      } else {
+        // CREAR nuevo item
+        result = await createGalleryItem(galleryData);
+      }
+
+      if (result.success) {
+        // Limpiar formulario
+        setGalleryForm({
+          title: '',
+          imageUrl: '',
+          cols: 1,
+          rows: 1
+        });
+        setEditingGalleryItem(null);
+        setIsGalleryModalOpen(false);
+        alert(editingGalleryItem ? '✅ Foto actualizada' : '✅ Foto agregada exitosamente');
+      } else {
+        alert('❌ Error al guardar foto');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      alert('❌ Error al guardar');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // Función para abrir modal en modo edición
+  const handleEditGalleryItem = (item: any) => {
+    setGalleryForm({
+      title: item.title,
+      imageUrl: item.imageUrl,
+      cols: item.cols || 1,
+      rows: item.rows || 1
+    });
+    setEditingGalleryItem(item.id);
+    setIsGalleryModalOpen(true);
+  };
+
+  // Función para eliminar item de galería
+  const handleDeleteGalleryItem = async (id: string, title: string) => {
+    if (!confirm(`¿Seguro que deseas eliminar "${title}"?`)) return;
+    
+    const result = await deleteGalleryItem(id);
+    if (result.success) {
+      alert('✅ Foto eliminada');
+    } else {
+      alert('❌ Error al eliminar');
+    }
+  };
+
+  // Función para abrir modal en modo edición
+  const handleEditTeacher = (teacher: any) => {
+    setTeacherForm({
+      name: teacher.name,
+      role: teacher.role,
+      area: teacher.area,
+      quote: teacher.quote,
+      imageUrl: teacher.imageUrl
+    });
+    setEditingTeacher(teacher.id);
+    setIsTeacherModalOpen(true);
+  };
+
+  // Función para eliminar docente
+  const handleDeleteTeacher = async (id: string, name: string) => {
+    if (!confirm(`¿Seguro que deseas eliminar a "${name}"?`)) return;
+    
+    const result = await deleteTeamMember(id);
+    if (result.success) {
+      alert('✅ Docente eliminado');
+    } else {
+      alert('❌ Error al eliminar');
+    }
+  };
+
   // Simulating backend save delay
   const handleModalSave = (closeModal: () => void) => {
     setIsSaving(true);
@@ -575,23 +752,47 @@ const Admin = () => {
   />
 );
         case 'teachers': return (
-          <TeachersView 
-            team={firebaseTeam}
-            onEdit={() => setIsTeacherModalOpen(true)}
-            onDelete={async (id) => {
-              if(confirm('¿Eliminar miembro?')) await deleteTeamMember(id);
-            }}
-          />
-        );
+  <TeachersView 
+    team={firebaseTeam}
+    onNew={() => {
+      setEditingTeacher(null);
+      setTeacherForm({
+        name: '',
+        role: '',
+        area: '',
+        quote: '',
+        imageUrl: ''
+      });
+      setIsTeacherModalOpen(true);
+    }}
+    onEdit={handleEditTeacher}
+    onDelete={(id) => {
+      const teacher = firebaseTeam.find(t => t.id === id);
+      if (teacher) handleDeleteTeacher(id, teacher.name);
+    }}
+  />
+);
         case 'home_editor': return <HomeEditorView />;
         case 'gallery': return (
-          <GalleryView 
-            gallery={firebaseGallery}
-            onDelete={async (id) => {
-              if(confirm('¿Eliminar foto?')) await deleteGalleryItem(id);
-            }}
-          />
-        );
+  <GalleryView 
+    gallery={firebaseGallery}
+    onNew={() => {
+      setEditingGalleryItem(null);
+      setGalleryForm({
+        title: '',
+        imageUrl: '',
+        cols: 1,
+        rows: 1
+      });
+      setIsGalleryModalOpen(true);
+    }}
+    onEdit={handleEditGalleryItem}
+    onDelete={(id) => {
+      const item = firebaseGallery.find(g => g.id === id);
+      if (item) handleDeleteGalleryItem(id, item.title);
+    }}
+  />
+);
         case 'subscribers': return <SubscribersView subscribers={firebaseSubscribers} />;
         default: return <DashboardView />;
     }
@@ -817,27 +1018,6 @@ const Admin = () => {
                              />
                         </div>
 
-                      {/* Teacher/Member Modal */}
-        {isTeacherModalOpen && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-                <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => !isSaving && setIsTeacherModalOpen(false)}></div>
-                <div className="relative bg-[#1a1f35] border border-white/10 rounded-2xl shadow-2xl w-full max-w-xl overflow-hidden animate-scale-in">
-                    <div className="p-6 border-b border-white/10 flex justify-between items-center bg-[#0a0f1e]">
-                        <h3 className="text-xl font-display font-bold text-white">Nuevo Miembro del Equipo</h3>
-                        <button onClick={() => setIsTeacherModalOpen(false)} disabled={isSaving} className="text-gray-400 hover:text-white transition-colors disabled:opacity-50"><X size={24}/></button>
-                    </div>
-                    <div className="p-8 space-y-6">
-                        <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-4">
-                            <p className="text-yellow-200 text-sm">⚠️ Funcionalidad en desarrollo. Próximamente podrás agregar miembros del equipo.</p>
-                        </div>
-                    </div>
-                    <div className="p-6 border-t border-white/10 flex justify-end gap-4 bg-[#0a0f1e]">
-                        <button onClick={() => setIsTeacherModalOpen(false)} className="px-6 py-2.5 rounded-xl text-gray-400 hover:text-white font-medium">Cerrar</button>
-                    </div>
-                </div>
-            </div>
-        )}
-
                         {/* Featured Toggle */}
                         <div className="flex items-center justify-between bg-white/5 p-4 rounded-xl border border-white/10">
                             <div>
@@ -872,26 +1052,159 @@ const Admin = () => {
         {isTeacherModalOpen && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
                 <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => !isSaving && setIsTeacherModalOpen(false)}></div>
-                <div className="relative bg-[#1a1f35] border border-white/10 rounded-2xl shadow-2xl w-full max-w-xl overflow-hidden animate-scale-in">
-                    <div className="p-6 border-b border-white/10 flex justify-between items-center bg-[#0a0f1e]">
-                        <h3 className="text-xl font-display font-bold text-white">Editar Miembro</h3>
+                <div className="relative bg-[#1a1f35] border border-white/10 rounded-2xl shadow-2xl w-full max-w-xl animate-scale-in" style={{maxHeight: '90vh', overflowY: 'auto'}}>
+                    <div className="p-6 border-b border-white/10 flex justify-between items-center bg-[#0a0f1e] sticky top-0 z-10">
+                        <h3 className="text-xl font-display font-bold text-white">
+                            {editingTeacher ? 'Editar Miembro' : 'Nuevo Miembro del Equipo'}
+                        </h3>
                         <button onClick={() => setIsTeacherModalOpen(false)} disabled={isSaving} className="text-gray-400 hover:text-white transition-colors disabled:opacity-50"><X size={24}/></button>
                     </div>
+                    
                     <div className="p-8 space-y-6">
-                         <div className="grid grid-cols-1 gap-4">
-                             <input type="text" placeholder="Nombre Completo" className="w-full bg-[#0a0f1e] border border-white/10 rounded-xl px-4 py-3 text-white focus:border-primary outline-none" />
-                             <input type="text" placeholder="Rol (ej: Docente)" className="w-full bg-[#0a0f1e] border border-white/10 rounded-xl px-4 py-3 text-white focus:border-primary outline-none" />
-                             <textarea placeholder="Cita inspiradora..." rows={3} className="w-full bg-[#0a0f1e] border border-white/10 rounded-xl px-4 py-3 text-white focus:border-primary outline-none" />
-                         </div>
+                        <div className="space-y-2">
+                            <label className="text-xs font-bold text-gray-400 uppercase">Nombre Completo *</label>
+                            <input 
+                                type="text" 
+                                value={teacherForm.name}
+                                onChange={(e) => setTeacherForm({...teacherForm, name: e.target.value})}
+                                className="w-full bg-[#0a0f1e] border border-white/10 rounded-xl px-4 py-3 text-white focus:border-primary outline-none" 
+                                placeholder="Miriam Foster"
+                            />
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold text-gray-400 uppercase">Rol *</label>
+                                <input 
+                                    type="text" 
+                                    value={teacherForm.role}
+                                    onChange={(e) => setTeacherForm({...teacherForm, role: e.target.value})}
+                                    className="w-full bg-[#0a0f1e] border border-white/10 rounded-xl px-4 py-3 text-white focus:border-primary outline-none" 
+                                    placeholder="Docente Fundadora"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold text-gray-400 uppercase">Área</label>
+                                <input 
+                                    type="text" 
+                                    value={teacherForm.area}
+                                    onChange={(e) => setTeacherForm({...teacherForm, area: e.target.value})}
+                                    className="w-full bg-[#0a0f1e] border border-white/10 rounded-xl px-4 py-3 text-white focus:border-primary outline-none" 
+                                    placeholder="Innovación Educativa"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-xs font-bold text-gray-400 uppercase">Cita Inspiradora</label>
+                            <textarea 
+                                rows={3} 
+                                value={teacherForm.quote}
+                                onChange={(e) => setTeacherForm({...teacherForm, quote: e.target.value})}
+                                className="w-full bg-[#0a0f1e] border border-white/10 rounded-xl px-4 py-3 text-white focus:border-primary outline-none" 
+                                placeholder="Todo empezó con una grabadora simple..."
+                            />
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-xs font-bold text-gray-400 uppercase">URL de Foto</label>
+                            <input 
+                                type="url" 
+                                value={teacherForm.imageUrl}
+                                onChange={(e) => setTeacherForm({...teacherForm, imageUrl: e.target.value})}
+                                className="w-full bg-[#0a0f1e] border border-white/10 rounded-xl px-4 py-3 text-white focus:border-primary outline-none" 
+                                placeholder="https://res.cloudinary.com/..."
+                            />
+                        </div>
                     </div>
-                    <div className="p-6 border-t border-white/10 flex justify-end gap-4 bg-[#0a0f1e]">
-                        <button onClick={() => setIsTeacherModalOpen(false)} disabled={isSaving} className="px-6 py-2.5 rounded-xl text-gray-400 hover:text-white font-medium disabled:opacity-50">Cancelar</button>
+
+                    <div className="p-6 border-t border-white/10 flex justify-end gap-4 bg-[#0a0f1e] sticky bottom-0">
+                        <button onClick={() => setIsTeacherModalOpen(false)} disabled={isSaving} className="px-6 py-2.5 rounded-xl text-gray-400 hover:text-white font-medium transition-colors disabled:opacity-50">Cancelar</button>
                         <button 
-                            onClick={() => handleModalSave(() => setIsTeacherModalOpen(false))}
+                            onClick={handleSaveTeacher} 
                             disabled={isSaving}
-                            className="px-6 py-2.5 rounded-xl bg-primary hover:bg-primary-dark text-white font-bold flex items-center gap-2 disabled:opacity-80 disabled:cursor-not-allowed"
+                            className="px-6 py-2.5 rounded-xl bg-primary hover:bg-primary-dark text-white font-bold shadow-lg flex items-center gap-2 disabled:opacity-80 disabled:cursor-not-allowed"
                         >
-                            {isSaving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
+                            {isSaving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />} 
+                            {isSaving ? 'Guardando...' : 'Guardar'}
+                        </button>
+                    </div>
+                </div>
+            </div>
+          )}
+
+        {/* Gallery Modal */}
+        {isGalleryModalOpen && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => !isSaving && setIsGalleryModalOpen(false)}></div>
+                <div className="relative bg-[#1a1f35] border border-white/10 rounded-2xl shadow-2xl w-full max-w-xl animate-scale-in" style={{maxHeight: '90vh', overflowY: 'auto'}}>
+                    <div className="p-6 border-b border-white/10 flex justify-between items-center bg-[#0a0f1e] sticky top-0 z-10">
+                        <h3 className="text-xl font-display font-bold text-white">
+                            {editingGalleryItem ? 'Editar Foto' : 'Nueva Foto para Galería'}
+                        </h3>
+                        <button onClick={() => setIsGalleryModalOpen(false)} disabled={isSaving} className="text-gray-400 hover:text-white transition-colors disabled:opacity-50"><X size={24}/></button>
+                    </div>
+                    
+                    <div className="p-8 space-y-6">
+                        <div className="space-y-2">
+                            <label className="text-xs font-bold text-gray-400 uppercase">Título *</label>
+                            <input 
+                                type="text" 
+                                value={galleryForm.title}
+                                onChange={(e) => setGalleryForm({...galleryForm, title: e.target.value})}
+                                className="w-full bg-[#0a0f1e] border border-white/10 rounded-xl px-4 py-3 text-white focus:border-primary outline-none" 
+                                placeholder="Taller de Guion"
+                            />
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-xs font-bold text-gray-400 uppercase">URL de Imagen *</label>
+                            <input 
+                                type="url" 
+                                value={galleryForm.imageUrl}
+                                onChange={(e) => setGalleryForm({...galleryForm, imageUrl: e.target.value})}
+                                className="w-full bg-[#0a0f1e] border border-white/10 rounded-xl px-4 py-3 text-white focus:border-primary outline-none" 
+                                placeholder="https://res.cloudinary.com/..."
+                            />
+                        </div>
+
+                        <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-4">
+                            <h4 className="text-sm font-bold text-blue-200 mb-3">Tamaño en el Grid</h4>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <label className="text-xs font-bold text-gray-400 uppercase">Columnas (Ancho)</label>
+                                    <select 
+                                        value={galleryForm.cols}
+                                        onChange={(e) => setGalleryForm({...galleryForm, cols: parseInt(e.target.value)})}
+                                        className="w-full bg-[#0a0f1e] border border-white/10 rounded-xl px-4 py-3 text-white focus:border-primary outline-none"
+                                    >
+                                        <option value="1">1 (Normal)</option>
+                                        <option value="2">2 (Panorámica)</option>
+                                    </select>
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-xs font-bold text-gray-400 uppercase">Filas (Alto)</label>
+                                    <select 
+                                        value={galleryForm.rows}
+                                        onChange={(e) => setGalleryForm({...galleryForm, rows: parseInt(e.target.value)})}
+                                        className="w-full bg-[#0a0f1e] border border-white/10 rounded-xl px-4 py-3 text-white focus:border-primary outline-none"
+                                    >
+                                        <option value="1">1 (Normal)</option>
+                                        <option value="2">2 (Vertical)</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="p-6 border-t border-white/10 flex justify-end gap-4 bg-[#0a0f1e] sticky bottom-0">
+                        <button onClick={() => setIsGalleryModalOpen(false)} disabled={isSaving} className="px-6 py-2.5 rounded-xl text-gray-400 hover:text-white font-medium transition-colors disabled:opacity-50">Cancelar</button>
+                        <button 
+                            onClick={handleSaveGalleryItem} 
+                            disabled={isSaving}
+                            className="px-6 py-2.5 rounded-xl bg-primary hover:bg-primary-dark text-white font-bold shadow-lg flex items-center gap-2 disabled:opacity-80 disabled:cursor-not-allowed"
+                        >
+                            {isSaving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />} 
                             {isSaving ? 'Guardando...' : 'Guardar'}
                         </button>
                     </div>
