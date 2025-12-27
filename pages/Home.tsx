@@ -55,11 +55,11 @@ const Reveal: React.FC<RevealProps> = ({ children, delay = 0 }) => (
 
 const SectionHero = () => {
   const platformLogos = [
-    { name: 'Spotify', url: 'https://res.cloudinary.com/dkoshgzxo/image/upload/v1763670317/Spotify_oabsyx.png', link: 'https://spotify.com' },
-    { name: 'Apple Podcasts', url: 'https://res.cloudinary.com/dkoshgzxo/image/upload/v1763670317/Apple_Podcasts_fwt12k.png', link: 'https://apple.com/podcasts' },
-    { name: 'Google Podcasts', url: 'https://res.cloudinary.com/dkoshgzxo/image/upload/v1763670316/Google_Podcasts_blyorr.png', link: 'https://podcasts.google.com' },
-    { name: 'SoundCloud', url: 'https://res.cloudinary.com/dkoshgzxo/image/upload/v1763670317/soundcloud_flfrpq.png', link: 'https://soundcloud.com' },
-    { name: 'Pocket Casts', url: 'https://res.cloudinary.com/dkoshgzxo/image/upload/v1763670316/pocketcasts_xqo0zl.png', link: 'https://pocketcasts.com' },
+    { name: 'Spotify', url: 'https://res.cloudinary.com/dkoshgzxo/image/upload/q_auto,f_auto,w_120/v1763670317/Spotify_oabsyx.png', link: 'https://spotify.com' },
+    { name: 'Apple Podcasts', url: 'https://res.cloudinary.com/dkoshgzxo/image/upload/q_auto,f_auto,w_120/v1763670317/Apple_Podcasts_fwt12k.png', link: 'https://apple.com/podcasts' },
+    { name: 'Google Podcasts', url: 'https://res.cloudinary.com/dkoshgzxo/image/upload/q_auto,f_auto,w_120/v1763670316/Google_Podcasts_blyorr.png', link: 'https://podcasts.google.com' },
+    { name: 'SoundCloud', url: 'https://res.cloudinary.com/dkoshgzxo/image/upload/q_auto,f_auto,w_120/v1763670317/soundcloud_flfrpq.png', link: 'https://soundcloud.com' },
+    { name: 'Pocket Casts', url: 'https://res.cloudinary.com/dkoshgzxo/image/upload/q_auto,f_auto,w_120/v1763670316/pocketcasts_xqo0zl.png', link: 'https://pocketcasts.com' },
   ];
 
   const handleScrollToTrending = () => {
@@ -411,7 +411,7 @@ const SectionHostHighlight = () => (
            {/* Main Image - No Container - Floating Free */}
            <div className="absolute inset-0 flex items-center justify-center z-20">
              <img 
-               src="https://res.cloudinary.com/dkoshgzxo/image/upload/v1763677415/Blob_esdauu.png" 
+               src="https://res.cloudinary.com/dkoshgzxo/image/upload/q_auto,f_auto,w_800/v1763677415/Blob_esdauu.png" 
                className="w-[110%] h-[110%] object-contain drop-shadow-2xl hover:scale-105 transition-transform duration-500"
                alt="Estudiante Destacado"
              />

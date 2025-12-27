@@ -18,6 +18,32 @@ export default defineConfig(({ mode }) => {
         alias: {
           '@': path.resolve(__dirname, '.'),
         }
+      },
+      build: {
+        target: 'esnext',
+        minify: 'terser',
+        terserOptions: {
+          compress: {
+            drop_console: true,
+            drop_debugger: true
+          }
+        },
+        rollupOptions: {
+          output: {
+            manualChunks: {
+              'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+              'firebase-vendor': ['firebase/app', 'firebase/auth', 'firebase/firestore'],
+              'motion-vendor': ['framer-motion'],
+              'icons-vendor': ['lucide-react']
+            }
+          }
+        },
+        chunkSizeWarningLimit: 800,
+        cssCodeSplit: true,
+        sourcemap: mode === 'development'
+      },
+      optimizeDeps: {
+        include: ['react', 'react-dom', 'react-router-dom', 'firebase/app', 'firebase/firestore']
       }
     };
 });

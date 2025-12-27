@@ -24,3 +24,34 @@ dist-ssr
 *.sw?
 .env.local
 .env
+
+# Archivos temporales y backups
+*.backup
+*.backup.*
+*.old
+*.bak
+*.log
+*.tmp
+*~
+.DS_Store
+
+# Scripts de optimización temporales
+optimize*.sh
+cleanup*.sh
+
+# Reportes y logs
+optimization_report_*.txt
+build-log.txt
+project-structure.txt
+cambios.txt
+
+# Carpetas de backup
+.backup_*/
+backup_*/
+
+# Dist (si no quieres subirlo)
+dist/
+
+# Cache de Vite
+node_modules/.vite/
+node_modules/.cache/
